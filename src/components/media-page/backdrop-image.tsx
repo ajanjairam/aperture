@@ -29,9 +29,11 @@ export function BackdropImage({
   const blurHash =
     movie.ImageBlurHashes?.["Backdrop"]?.[backdropImageTag!] || "";
 
-  const lightSpeedUrl = backdropImage?.includes("192.168.")
-    ? backdropImage
-    : "https://lightspeed.ac/?url=" + backdropImage;
+  // const lightSpeedUrl = backdropImage?.includes("192.168.")
+  //   ? backdropImage
+  //   : "https://lightspeed.ac/?url=" + backdropImage;
+
+  const lightSpeedUrl = backdropImage ?? "";
 
   // Decode blur hash
   useEffect(() => {

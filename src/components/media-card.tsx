@@ -109,9 +109,11 @@ export function MediaCard({
     }
   };
 
-  const lightSpeedUrl = imageUrl?.includes("192.168.")
-    ? imageUrl
-    : "https://lightspeed.ac/?url=" + imageUrl;
+  // const lightSpeedUrl = imageUrl?.includes("192.168.")
+  //   ? imageUrl
+  //   : "https://lightspeed.ac/?url=" + imageUrl;
+
+  const lightSpeedUrl = imageUrl ?? "";
 
   return (
     <div

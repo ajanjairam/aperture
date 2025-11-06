@@ -12,9 +12,11 @@ export function CastCrewCard({ person }: { person: BaseItemPerson }) {
 
   const imageUrl = `${serverUrl}/Items/${person.Id}/Images/Primary?maxWidth=250&maxHeight=250&quality=60&tag=${person.PrimaryImageTag}`;
 
-  const lightSpeedUrl = imageUrl?.includes("192.168.")
-    ? imageUrl
-    : "https://lightspeed.ac/?url=" + imageUrl;
+  // const lightSpeedUrl = imageUrl?.includes("192.168.")
+  //   ? imageUrl
+  //   : "https://lightspeed.ac/?url=" + imageUrl;
+
+  const lightSpeedUrl = imageUrl ?? "";
 
   return (
     <Link to={`/person/${person.Id}`} className="shrink-0 group">

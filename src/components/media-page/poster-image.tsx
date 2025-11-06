@@ -24,9 +24,11 @@ export function PosterImage({
   const primaryImageTag = movie.ImageTags?.["Primary"];
   const blurHash = movie.ImageBlurHashes?.["Primary"]?.[primaryImageTag!] || "";
 
-  const lightSpeedUrl = posterImage?.includes("192.168.")
-    ? posterImage
-    : "https://lightspeed.ac/?url=" + posterImage;
+  // const lightSpeedUrl = posterImage?.includes("192.168.")
+  //   ? posterImage
+  //   : "https://lightspeed.ac/?url=" + posterImage;
+
+  const lightSpeedUrl = posterImage ?? "";
 
   // Decode blur hash
   useEffect(() => {

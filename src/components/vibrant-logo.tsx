@@ -20,9 +20,11 @@ export function VibrantLogo({
 }: VibrantLogoProps) {
   const [shadowColor, setShadowColor] = useState<string>("");
 
-  const lightSpeedUrl = src?.includes("192.168.")
-    ? src
-    : "https://lightspeed.ac/?url=" + src;
+  // const lightSpeedUrl = src?.includes("192.168.")
+  //   ? src
+  //   : "https://lightspeed.ac/?url=" + src;
+
+  const lightSpeedUrl = src ?? "";
 
   useEffect(() => {
     const extractColors = async () => {

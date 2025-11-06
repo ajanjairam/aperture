@@ -73,11 +73,13 @@ export function LiveChannelCard({
     }
   };
 
-  const lightSpeedUrl = imageUrl
-    ? imageUrl?.includes("192.168.")
-      ? imageUrl
-      : "https://lightspeed.ac/?url=" + imageUrl
-    : null;
+  // const lightSpeedUrl = imageUrl
+  //   ? imageUrl?.includes("192.168.")
+  //     ? imageUrl
+  //     : "https://lightspeed.ac/?url=" + imageUrl
+  //   : null;
+
+  const lightSpeedUrl = imageUrl ?? "";
 
   return (
     <div

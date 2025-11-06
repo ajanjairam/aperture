@@ -129,9 +129,11 @@ export function AppSidebar({
     }
   };
 
-  const lightSpeedUrl = avatarUrl?.includes("192.168.")
-    ? avatarUrl
-    : "https://lightspeed.ac/?url=" + avatarUrl;
+  // const lightSpeedUrl = avatarUrl?.includes("192.168.")
+  //   ? avatarUrl
+  //   : "https://lightspeed.ac/?url=" + avatarUrl;
+
+  const lightSpeedUrl = avatarUrl ?? "";
 
   return (
     <Sidebar
