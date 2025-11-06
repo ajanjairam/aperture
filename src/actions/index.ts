@@ -4,6 +4,10 @@ export {
   getServerUrl,
   checkServerHealth,
   authenticateUser,
+  isQuickConnectEnabled,
+  initiateQuickConnect,
+  getQuickConnectStatus,
+  authenticateWithQuickConnect,
   logout,
   getUser,
   isAuthenticated,
@@ -65,3 +69,4 @@ export type {
   UserPolicy,
   UserWithPolicy,
 } from "./utils";
+export type { QuickConnectResult } from "./auth";

@@ -2,17 +2,48 @@ import { SystemApi } from "@jellyfin/sdk/lib/generated-client/api/system-api";
 import { Configuration } from "@jellyfin/sdk/lib/generated-client/configuration";
 import type { UserDto } from "@jellyfin/sdk/lib/generated-client/models/user-dto";
 import { createJellyfinInstance } from "../lib/utils";
+import { getDeviceId } from "../lib/device-id";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 import { StoreServerURL } from "./store/store-server-url";
 import { StoreAuthData } from "./store/store-auth-data";
 
 // Type aliases for easier use
 type JellyfinUserWithToken = UserDto & { AccessToken?: string };
 
-// Function to get or create a unique device ID for fallback auth
-function getDeviceId(): string {
-  return uuidv4();
+const CLIENT_NAME = "SamAura";
+const CLIENT_VERSION = "1.0.0";
+const DEVICE_NAME = "SamAura Web Client";
+
+export interface QuickConnectResult {
+  Authenticated?: boolean;
+  Secret?: string;
+  Code?: string;
+  DeviceId?: string;
+  DeviceName?: string;
+  AppName?: string;
+  AppVersion?: string;
+  DateAdded?: string;
+}
+
+function buildAuthorizationHeader(
+  additional?: Record<string, string | undefined>
+) {
+  const parts = [
+    `MediaBrowser Client="${CLIENT_NAME}"`,
+    `Device="${DEVICE_NAME}"`,
+    `DeviceId="${getDeviceId()}"`,
+    `Version="${CLIENT_VERSION}"`,
+  ];
+
+  if (additional) {
+    Object.entries(additional).forEach(([key, value]) => {
+      if (value) {
+        parts.push(`${key}="${value}"`);
+      }
+    });
+  }
+
+  return parts.join(", ");
 }
 
 export async function setServerUrl(url: string) {
@@ -150,7 +181,7 @@ export async function authenticateUser(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Emby-Authorization": `MediaBrowser Client="SamAura", Device="SamAura Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`,
+          "X-Emby-Authorization": buildAuthorizationHeader(),
         },
         body: JSON.stringify({
           Username: username,
@@ -201,6 +232,158 @@ export async function authenticateUser(
   return false;
 }
 
+export async function isQuickConnectEnabled(): Promise<boolean> {
+  const serverUrl = await getServerUrl();
+  if (!serverUrl) return false;
+
+  try {
+    const response = await fetch(`${serverUrl}/QuickConnect/Enabled`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "X-Emby-Authorization": buildAuthorizationHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const text = await response.text();
+    if (!text) return false;
+
+    try {
+      return Boolean(JSON.parse(text));
+    } catch {
+      return text.trim().toLowerCase() === "true";
+    }
+  } catch (error) {
+    console.error("Quick Connect availability check failed:", error);
+    return false;
+  }
+}
+
+export async function initiateQuickConnect(): Promise<QuickConnectResult | null> {
+  const serverUrl = await getServerUrl();
+  if (!serverUrl) return null;
+
+  try {
+    const response = await fetch(`${serverUrl}/QuickConnect/Initiate`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-Emby-Authorization": buildAuthorizationHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Quick Connect initiate failed with status ${response.status}`);
+    }
+
+    const result = (await response.json()) as QuickConnectResult;
+    if (!result || !result.Secret || !result.Code) {
+      throw new Error(
+        "Quick Connect did not return a valid code. Please try again or use your password."
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Failed to initiate Quick Connect:", error);
+    throw error;
+  }
+}
+
+export async function getQuickConnectStatus(
+  secret: string
+): Promise<QuickConnectResult | null> {
+  const serverUrl = await getServerUrl();
+  if (!serverUrl || !secret) return null;
+
+  try {
+    const params = new URLSearchParams({ secret });
+    const response = await fetch(
+      `${serverUrl}/QuickConnect/Connect?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-Emby-Authorization": buildAuthorizationHeader(),
+        },
+      }
+    );
+
+    if (response.status === 204) {
+      return null;
+    }
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(
+        `Quick Connect status failed with status ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result = (await response.json()) as QuickConnectResult;
+    return result ?? null;
+  } catch (error) {
+    console.error("Failed to retrieve Quick Connect status:", error);
+    throw error;
+  }
+}
+
+export async function authenticateWithQuickConnect(
+  secret: string
+): Promise<boolean> {
+  const serverUrl = await getServerUrl();
+  if (!serverUrl || !secret) return false;
+
+  try {
+    const response = await fetch(
+      `${serverUrl}/Users/AuthenticateWithQuickConnect`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Emby-Authorization": buildAuthorizationHeader(),
+        },
+        body: JSON.stringify({ Secret: secret }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Quick Connect authentication failed (${response.status}): ${errorBody}`
+      );
+    }
+
+    const result = await response.json();
+    if (result?.AccessToken && result?.User) {
+      const userWithToken = {
+        ...result.User,
+        AccessToken: result.AccessToken,
+      };
+
+      await StoreAuthData.set({
+        serverUrl,
+        user: userWithToken,
+        timestamp: Date.now(),
+      });
+
+      return true;
+    }
+
+    throw new Error("Quick Connect response missing authentication details.");
+  } catch (error) {
+    console.error("Quick Connect authentication error:", error);
+    return false;
+  }
+}
+
 export function logout(navigate: ReturnType<typeof useNavigate>) {
   Promise.all([StoreAuthData.remove(), StoreServerURL.remove()]).then(() => {
     navigate("/login");
@@ -248,7 +431,7 @@ export async function debugServerConnection(): Promise<void> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `MediaBrowser Client="SamAura", Device="SamAura Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`,
+        "X-Emby-Authorization": buildAuthorizationHeader(),
       },
       body: JSON.stringify({
         Username: "test",

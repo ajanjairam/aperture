@@ -1,15 +1,10 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Jellyfin } from "@jellyfin/sdk";
-import { v4 as uuidv4 } from "uuid";
+import { getDeviceId } from "./device-id";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-// Function to get or create a unique device ID
-function getDeviceId(): string {
-  return uuidv4();
 }
 
 // Create Jellyfin SDK instance with unique device ID
