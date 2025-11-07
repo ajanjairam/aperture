@@ -44,7 +44,11 @@ Special Thanks to **[@AyaanZaveri](https://github.com/AyaanZaveri)**, this is ba
 - **Theming Enhancements** – Liquid Glass like Theme coming soon
 - **Using Tauri instead of Electron** – Now native apps will be based on tauri for better performance, especially with Vite + React + Tauri
 
-- **🔹Now Supports Direct Play🔹** – Now the urls can be played by both transcoding as well as direct streaming.
+**🔹Version 1.1.x Changes🔹**
+
+- **Now Supports Direct Play** – Now the urls can be played by both transcoding as well as direct streaming.
+- **Theme Songs Playback** – Now when browsing the tv show/movie detail page, will play the theme song whenever available.
+- **Video Backdrops/Theme Videos** – Now when browsing the tv show/movie detail page, whenever a theme video is available, it will be used as the video backdrop instead of the static backdrop image, theme video takes precedence over theme music, hence theme music is disabled on items where theme video is available.
 
 ---
 
