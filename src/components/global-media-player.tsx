@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { JellyfinItem, MediaSourceInfo } from "../types/jellyfin";
+import { TrickplayInfo } from "@jellyfin/sdk/lib/generated-client/models/trickplay-info";
 import { Button } from "../components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -24,7 +25,6 @@ import {
   RotateCcw,
   RotateCw,
   Users,
-  Ship,
   FastForward,
 } from "lucide-react";
 import { useMediaPlayer } from "../contexts/MediaPlayerContext";
@@ -50,12 +50,128 @@ import {
 import { ProgressiveBlur } from "../components/motion-primitives/progressive-blur";
 import { useAuth } from "../hooks/useAuth";
 import { useSettings, BITRATE_OPTIONS } from "../contexts/settings-context";
-import { fetchIntroOutro } from "../actions/media";
+import {
+  fetchIntroOutro,
+  fetchTrickplayTileImageUrl,
+} from "../actions/media";
 import { decode } from "blurhash";
 import DisplayEndTime from "./display-end-time";
 import { v4 as uuidv4 } from "uuid";
 
 interface GlobalMediaPlayerProps {}
+
+interface TrickplayConfig {
+  itemId: string;
+  mediaSourceId?: string;
+  width: number;
+  height: number;
+  tileWidth: number;
+  tileHeight: number;
+  intervalMs: number;
+  thumbnailCount?: number;
+}
+
+type TrickplayManifest =
+  | Record<string, Record<string, TrickplayInfo>>
+  | null
+  | undefined;
+
+function buildTrickplayConfig(
+  item: JellyfinItem,
+  options: { source?: MediaSourceInfo | null; fallbackItemId?: string }
+): TrickplayConfig | null {
+  const manifest = (item as JellyfinItem & {
+    Trickplay?: TrickplayManifest;
+  }).Trickplay as TrickplayManifest;
+
+  const resolvedItemId = item?.Id ?? options.fallbackItemId;
+  if (!resolvedItemId || !manifest) {
+    return null;
+  }
+
+  const availableSources = Object.entries(manifest).filter(
+    ([, widthMap]) => widthMap && Object.keys(widthMap).length > 0
+  );
+
+  if (availableSources.length === 0) {
+    return null;
+  }
+
+  const preferredSourceId =
+    (options.source?.Id && manifest[options.source.Id]
+      ? options.source.Id
+      : undefined) ?? availableSources[0][0];
+
+  const widthManifest = manifest[preferredSourceId];
+  if (!widthManifest) {
+    return null;
+  }
+
+  const widthEntries = Object.entries(widthManifest)
+    .map(([widthKey, info]) => ({
+      info,
+      numericWidth: info?.Width && info.Width > 0 ? info.Width : Number(widthKey),
+    }))
+    .filter(
+      (entry): entry is { info: TrickplayInfo; numericWidth: number } =>
+        !!entry.info && !!entry.numericWidth && entry.numericWidth > 0
+    );
+
+  if (widthEntries.length === 0) {
+    return null;
+  }
+
+  const maxWidth =
+    typeof window !== "undefined"
+      ? window.screen.width * (window.devicePixelRatio || 1) * 0.2
+      : Infinity;
+
+  let selected = widthEntries[0];
+  for (const entry of widthEntries) {
+    if (
+      !selected ||
+      (entry.numericWidth < selected.numericWidth &&
+        selected.numericWidth > maxWidth) ||
+      (entry.numericWidth > selected.numericWidth &&
+        entry.numericWidth <= maxWidth)
+    ) {
+      selected = entry;
+    }
+  }
+
+  const info = selected.info;
+  const width =
+    (info.Width && info.Width > 0 ? info.Width : selected.numericWidth) || 0;
+  const height =
+    (info.Height && info.Height > 0
+      ? info.Height
+      : Math.round(width * 0.5625)) || 0;
+  const tileWidth =
+    info.TileWidth && info.TileWidth > 0 ? info.TileWidth : 10;
+  const tileHeight =
+    info.TileHeight && info.TileHeight > 0 ? info.TileHeight : 10;
+  const intervalMs =
+    info.Interval && info.Interval > 0 ? info.Interval : 1000;
+  const thumbnailCount =
+    info.ThumbnailCount && info.ThumbnailCount > 0
+      ? info.ThumbnailCount
+      : undefined;
+
+  if (!width || !height || !tileWidth || !tileHeight || !intervalMs) {
+    return null;
+  }
+
+  return {
+    itemId: resolvedItemId,
+    mediaSourceId: preferredSourceId,
+    width,
+    height,
+    tileWidth,
+    tileHeight,
+    intervalMs,
+    thumbnailCount,
+  };
+}
 
 export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
   const {
@@ -136,6 +252,12 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const blobUrlsRef = useRef<string[]>([]);
+  const [trickplayConfig, setTrickplayConfig] = useState<TrickplayConfig | null>(
+    null
+  );
+  const [trickplayCacheBuster, setTrickplayCacheBuster] = useState(0);
+  const trickplaySpriteCacheRef = useRef<Map<number, string>>(new Map());
+  const trickplayPendingFetchRef = useRef<Set<number>>(new Set());
 
   // Helper function to convert seconds to Jellyfin ticks (1 tick = 100 nanoseconds)
   const secondsToTicks = (seconds: number) => Math.floor(seconds * 10000000);
@@ -310,6 +432,113 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
     blobUrlsRef.current = [];
   }, []);
 
+  const clearTrickplaySprites = useCallback(() => {
+    trickplayPendingFetchRef.current.clear();
+
+    trickplaySpriteCacheRef.current.forEach((url) => {
+      if (
+        url &&
+        typeof URL !== "undefined" &&
+        typeof URL.revokeObjectURL === "function"
+      ) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.warn("Failed to revoke trickplay sprite URL:", error);
+        }
+      }
+    });
+
+    trickplaySpriteCacheRef.current.clear();
+    setTrickplayCacheBuster((prev) => prev + 1);
+  }, []);
+
+  const queueTrickplayTileFetch = useCallback(
+    (tileIndex: number) => {
+      if (!trickplayConfig) return;
+      if (
+        trickplaySpriteCacheRef.current.has(tileIndex) ||
+        trickplayPendingFetchRef.current.has(tileIndex)
+      ) {
+        return;
+      }
+
+      trickplayPendingFetchRef.current.add(tileIndex);
+
+      fetchTrickplayTileImageUrl(
+        trickplayConfig.itemId,
+        trickplayConfig.width,
+        tileIndex,
+        trickplayConfig.mediaSourceId
+      )
+        .then((url) => {
+          if (!url) {
+            return;
+          }
+
+          trickplaySpriteCacheRef.current.set(tileIndex, url);
+          setTrickplayCacheBuster((prev) => prev + 1);
+        })
+        .catch((error) => {
+          console.warn(
+            `Unable to load trickplay tile ${tileIndex} for ${trickplayConfig.itemId}`,
+            error
+          );
+        })
+        .finally(() => {
+          trickplayPendingFetchRef.current.delete(tileIndex);
+        });
+    },
+    [trickplayConfig]
+  );
+  const renderTrickplayThumbnail = useCallback(
+    (time: number) => {
+      if (!trickplayConfig || trickplayConfig.intervalMs <= 0) {
+        return null;
+      }
+
+      const safeTime = Math.max(0, time);
+      const calculatedFrameIndex = Math.floor(
+        (safeTime * 1000) / trickplayConfig.intervalMs
+      );
+      const frameIndex = calculatedFrameIndex;
+
+      const tilesPerImage = Math.max(
+        1,
+        trickplayConfig.tileWidth * trickplayConfig.tileHeight
+      );
+      const tileIndex = Math.floor(frameIndex / tilesPerImage);
+
+      const spriteUrl = trickplaySpriteCacheRef.current.get(tileIndex);
+
+      if (!spriteUrl) {
+        queueTrickplayTileFetch(tileIndex);
+        return null;
+      }
+
+      const frameWithinTile = frameIndex - tileIndex * tilesPerImage;
+      const column =
+        trickplayConfig.tileWidth > 0
+          ? frameWithinTile % trickplayConfig.tileWidth
+          : 0;
+      const row =
+        trickplayConfig.tileWidth > 0
+          ? Math.floor(frameWithinTile / trickplayConfig.tileWidth)
+          : 0;
+
+      return {
+        src: spriteUrl,
+        coords: [
+          column * trickplayConfig.width,
+          row * trickplayConfig.height,
+          trickplayConfig.width,
+          trickplayConfig.height,
+        ] as [number, number, number, number],
+      };
+    },
+    [queueTrickplayTileFetch, trickplayConfig, trickplayCacheBuster]
+  );
+
   // Define handleClose first to avoid circular dependency
   const handleClose = useCallback(async () => {
     // Stop progress tracking before closing
@@ -317,6 +546,8 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
 
     // Clean up blob URLs
     cleanupBlobUrls();
+    clearTrickplaySprites();
+    setTrickplayConfig(null);
 
     setIsPlayerVisible(false);
     setStreamUrl(null);
@@ -331,7 +562,7 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
     setVideoStarted(false); // Reset video started state
     setBackdropImageLoaded(false); // Reset backdrop image state
     setBlurDataUrl(null); // Reset blur data URL
-  }, [stopProgressTracking, cleanupBlobUrls]);
+  }, [stopProgressTracking, cleanupBlobUrls, clearTrickplaySprites]);
 
   const handleVideoEnded = useCallback(async () => {
     await stopProgressTracking();
@@ -426,6 +657,18 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
     }
   }, [mediaDetails, blurDataUrl]);
 
+  useEffect(() => {
+    return () => {
+      clearTrickplaySprites();
+    };
+  }, [clearTrickplaySprites]);
+
+  useEffect(() => {
+    if (trickplayConfig) {
+      queueTrickplayTileFetch(0);
+    }
+  }, [trickplayConfig, queueTrickplayTileFetch]);
+
   const loadMedia = async () => {
     if (!currentMedia) return;
 
@@ -466,6 +709,14 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
           type: currentMedia.type,
           mediaSourceId: sourceToUse.Id || null,
         });
+
+        // Prepare trickplay metadata for this item/version
+        clearTrickplaySprites();
+        const computedTrickplay = buildTrickplayConfig(details, {
+          source: sourceToUse,
+          fallbackItemId: currentMedia.id,
+        });
+        setTrickplayConfig(computedTrickplay);
 
         // Generate stream URL based on playback mode
         const bitrateOption = BITRATE_OPTIONS.find(
@@ -568,6 +819,9 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
           console.error("Failed to fetch intro/outro segments:", error);
           setMediaSegments({});
         }
+      } else {
+        clearTrickplaySprites();
+        setTrickplayConfig(null);
       }
     } catch (error) {
       console.error("Failed to load media:", error);
@@ -976,7 +1230,9 @@ export function GlobalMediaPlayer({}: GlobalMediaPlayerProps) {
               )}
             </div>
           </div>
-          <MediaPlayerSeek />
+          <MediaPlayerSeek
+            tooltipThumbnailRenderer={renderTrickplayThumbnail}
+          />
           <div className="flex w-full items-center gap-2">
             <div className="flex flex-1 items-center gap-2">
               <MediaPlayerPlay />
