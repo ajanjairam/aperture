@@ -24,7 +24,7 @@ const AURORA_THEME_PRESETS: Record<
       "radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.35), transparent 55%), radial-gradient(circle at 70% 0%, rgba(109, 40, 217, 0.35), transparent 45%), linear-gradient(130deg, rgba(3, 7, 18, 0.95), rgba(2, 6, 23, 0.9))",
   },
   "cinematic-theatre-black": {
-    colors: ["#f97316", "#7c3aed", "#030712"],
+    colors: ["#f97316", "#c1840a", "#030712"],
     background:
       "radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.4), transparent 55%), radial-gradient(circle at 80% 0%, rgba(124, 58, 237, 0.3), transparent 50%), linear-gradient(140deg, rgba(3, 3, 7, 0.95), rgba(2, 2, 4, 0.85))",
   },

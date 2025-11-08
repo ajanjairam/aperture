@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/loading-spinner";
 import { useThemeMedia } from "../../hooks/useThemeMedia";
+import { motion } from "framer-motion";
 
 export default function Movie() {
   const { id } = useParams<{ id: string }>();
@@ -149,7 +150,15 @@ export default function Movie() {
       </div>
 
       {/* Content section */}
-      <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6">
+      <motion.div
+        className="relative z-10 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6 shadow-2xl"
+        initial={{ marginTop: "-13.5rem" }}
+        animate={{
+          marginTop: showThemeVideo ? "-7.5rem" : "-13.5rem",
+          filter: showThemeVideo ? "brightness(1.02)" : "brightness(1)",
+        }}
+        transition={{ duration: 0.85, ease: [0.7, 0.1, 0.1, 1] }}
+      >
         <div className="flex flex-col md:flex-row mx-auto">
           {/* Movie poster */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
@@ -331,7 +340,7 @@ export default function Movie() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
       {/* Cast section */}
       {serverUrl ? (
         <div className="mt-12 px-6">
