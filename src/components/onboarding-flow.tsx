@@ -35,7 +35,7 @@ export function OnboardingFlow() {
     };
 
     checkAuthStatus();
-  }, [navigate, selectedTheme.variant]);
+  }, [navigate]);
 
   const handleServerSetup = () => {
     setCurrentStep("login");
