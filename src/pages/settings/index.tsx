@@ -115,7 +115,7 @@ export default function SettingsPage() {
 
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
-      <AuroraBackground colorStops={["#34d399", "#38bdf8", "#2dd4bf"]} />
+      <AuroraBackground />
       <div className="relative z-10">
         <div className="mb-6">
           <SearchBar />

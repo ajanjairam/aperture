@@ -93,7 +93,7 @@ export default function DashboardPage() {
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
       {/* Main content with higher z-index */}
-      <AuroraBackground colorStops={["#34d399", "#38bdf8", "#2dd4bf"]} />
+      <AuroraBackground />
       <div className="relative z-10">
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">
