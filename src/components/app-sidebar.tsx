@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom"; // for React Router
 // @ts-ignore
 import Logo from "../assets/logo/samaura.png";
 
-import { useTheme } from "next-themes";
 import {
   Sidebar,
   SidebarContent,
@@ -44,16 +43,15 @@ import {
   ChevronUp,
   Home,
   Library,
-  Sun,
-  Moon,
   Monitor,
   Settings2,
   ChevronRight,
   DiscAlbum,
   Antenna,
+  LayoutDashboard,
 } from "lucide-react";
-import { useSettings } from "../contexts/settings-context";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { THEME_OPTIONS } from "../constants/theme-options";
 
 interface JellyfinLibrary {
   Id: string;
@@ -69,8 +67,6 @@ export function AppSidebar({
   isTauriMac: boolean;
   isTauriFullscreen: boolean;
 }) {
-  const { setTheme } = useTheme();
-  const { videoBitrate, setVideoBitrate } = useSettings();
   const { state } = useSidebar();
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -221,8 +217,16 @@ export function AppSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link to="/dashboard" onClick={() => setOpenMobile(false)}>
-                    <Settings2 className="h-4 w-4" />
+                    <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/settings" onClick={() => setOpenMobile(false)}>
+                    <Settings2 className="h-4 w-4" />
+                    <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -268,28 +272,7 @@ export function AppSidebar({
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="gap-2">
-                    <Monitor className="h-4 w-4" />
-                    <span>Theme</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setTheme("light")}>
-                      <Sun className="h-4 w-4" />
-                      <span>Light</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      <Moon className="h-4 w-4" />
-                      <span>Dark</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("system")}>
-                      <Monitor className="h-4 w-4" />
-                      <span>System</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSeparator />
+                {/* <DropdownMenuSeparator /> */}
                 <DropdownMenuItem onClick={handleLogout} className="gap-2">
                   <LogOut className="h-4 w-4 text-red-600 dark:text-red-500" />
                   <span>Log out</span>

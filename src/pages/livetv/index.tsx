@@ -55,7 +55,6 @@ export default function LiveTVPage() {
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
       <AuroraBackground
-        colorStops={["#a78bfa", "#8b5cf6", "#7c3aed"]}
         amplitude={0.5}
         className="fixed inset-0 z-0 pointer-events-none opacity-40"
       />
