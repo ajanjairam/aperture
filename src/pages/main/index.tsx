@@ -81,10 +81,7 @@ export default function Home() {
   return (
     <AuthErrorHandler error={authError}>
       <div className="relative px-4 py-6 max-w-full overflow-hidden">
-        <AuroraBackground
-          amplitude={0.5}
-          className="fixed inset-0 z-0 pointer-events-none opacity-40"
-        />
+        <AuroraBackground />
 
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">

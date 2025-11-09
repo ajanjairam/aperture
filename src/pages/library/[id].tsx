@@ -75,10 +75,7 @@ export default function LibraryPage() {
 
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
-      <AuroraBackground
-        amplitude={0.5}
-        className="fixed inset-0 z-0 pointer-events-none opacity-40"
-      />
+      <AuroraBackground />
       {/* Main content with higher z-index */}
       <div className="relative z-10">
         <div className="relative z-[9999] mb-8">
