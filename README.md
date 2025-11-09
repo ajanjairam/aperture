@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-    <a href="https://github.com/akhilmulpurii/aperture"><img src="https://github.com/akhilmulpurii/aperture/blob/main/src/assets/logo/samaura.png?raw=true" alt="APERTÚRE" width="200"></a>
+    <a href="https://github.com/akhilmulpurii/aperture"><img src="https://github.com/akhilmulpurii/aperture/blob/main/src/assets/logo/icon.png?raw=true" alt="APERTÚRE" width="200"></a>
   <br>
   APERTÚRE
   <br>
@@ -108,8 +108,8 @@ The generated assets live in `dist/`. Configure your host to fall back to `index
 
 1. **Local build & run**
    ```bash
-  docker build -t aperture:latest .
-  docker run -p 4173:4173 aperture:latest
+   docker build -t aperture:latest .
+   docker run -p 4173:4173 aperture:latest
    ```
 2. **docker-compose**
    ```bash
