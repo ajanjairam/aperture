@@ -65,6 +65,7 @@ Special Thanks to **[@AyaanZaveri](https://github.com/AyaanZaveri)**, this is ba
 - **Theme Songs Playback** – Now when browsing the tv show/movie detail page, will play the theme song whenever available.
 - **Video Backdrops/Theme Videos** – Now when browsing the tv show/movie detail page, whenever a theme video is available, it will be used as the video backdrop instead of the static backdrop image, theme video takes precedence over theme music, hence theme music is disabled on items where theme video is available.
 - **Theming Enhancements** – Various theming variations have been added apart from the default light/dark mode (My personal favorite is the Cinematic Theatre Black).
+- **Added Trickplay Support** – Trickplay images are shown when available.
 
 ---
 
