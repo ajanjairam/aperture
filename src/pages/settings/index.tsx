@@ -65,9 +65,6 @@ export default function SettingsPage() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
-  const [quickConnectDialogOpen, setQuickConnectDialogOpen] =
-    useState(false);
-  const [quickConnectCode, setQuickConnectCode] = useState("");
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(
     null
   );
@@ -136,25 +133,6 @@ export default function SettingsPage() {
     updateAvatarPreview(objectUrl);
   };
 
-  const handleQuickConnectToggle = (open: boolean) => {
-    setQuickConnectDialogOpen(open);
-    if (!open) {
-      setQuickConnectCode("");
-    }
-  };
-
-  const handleQuickConnectSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    handleQuickConnectToggle(false);
-  };
-
-  const handleQuickConnectCodeChange = (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
-    const clean = event.target.value.replace(/[^a-zA-Z0-9]/g, "");
-    setQuickConnectCode(clean.slice(0, 8).toUpperCase());
-  };
-
   const displayAvatar = avatarPreview ?? avatarUrl ?? undefined;
   const lastSeenRaw = user?.LastLoginDate ?? user?.LastActivityDate;
   const lastSeen = lastSeenRaw
@@ -182,7 +160,7 @@ export default function SettingsPage() {
       description: "Pair a new device with a one-time Jellyfin code.",
       icon: QrCode,
       cta: "Enter code",
-      action: () => handleQuickConnectToggle(true),
+      action: () => navigate("/quick-connect"),
     },
     {
       title: "Profile Picture",
@@ -554,52 +532,6 @@ export default function SettingsPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog
-          open={quickConnectDialogOpen}
-          onOpenChange={handleQuickConnectToggle}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Quick Connect</DialogTitle>
-              <DialogDescription>
-                Generate a Quick Connect code on your Jellyfin server, then
-                paste it below to link this account.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleQuickConnectSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="quick-connect-code">
-                  Enter Quick Connect code
-                </Label>
-                <Input
-                  id="quick-connect-code"
-                  value={quickConnectCode}
-                  onChange={handleQuickConnectCodeChange}
-                  inputMode="text"
-                  autoComplete="one-time-code"
-                  placeholder="8-digit code"
-                  className="tracking-[0.15em] uppercase"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                We&apos;ll plug this form into the authentication flow soon. For
-                now, it gives you a feel for the experience.
-              </p>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleQuickConnectToggle(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={quickConnectCode.length < 6}>
-                  Continue
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

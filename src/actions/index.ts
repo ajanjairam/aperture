@@ -11,6 +11,7 @@ export {
   logout,
   getUser,
   changeUserPassword,
+  authorizeQuickConnectCode,
   isAuthenticated,
 } from "./auth";
 
