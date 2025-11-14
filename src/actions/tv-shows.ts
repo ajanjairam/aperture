@@ -127,10 +127,10 @@ export async function fetchEpisodeDetails(
   api.accessToken = user.AccessToken;
 
   try {
-    const userLibraryApi = new UserLibraryApi(api.configuration);
-    const { data } = await userLibraryApi.getItem({
+    const itemsApi = getItemsApi(api);
+    const { data } = await itemsApi.getItems({
       userId: user.Id,
-      itemId: episodeId,
+      ids: [episodeId],
       fields: [
         ItemFields.MediaSources,
         ItemFields.MediaStreams,
@@ -143,7 +143,7 @@ export async function fetchEpisodeDetails(
         ItemFields.Studios,
       ],
     });
-    return data;
+    return data.Items?.[0] ?? null;
   } catch (error) {
     console.error("Failed to fetch episode details:", error);
     return null;

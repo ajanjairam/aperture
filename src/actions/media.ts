@@ -202,10 +202,10 @@ export async function fetchMediaDetails(
     const api = jellyfinInstance.createApi(serverUrl);
     api.accessToken = user.AccessToken;
 
-    const userLibraryApi = new UserLibraryApi(api.configuration);
-    const { data } = await userLibraryApi.getItem({
+    const itemsApi = getItemsApi(api);
+    const { data } = await itemsApi.getItems({
       userId: user.Id,
-      itemId: mediaItemId,
+      ids: [mediaItemId],
       fields: [
         ItemFields.MediaSources,
         ItemFields.MediaStreams,
@@ -218,7 +218,7 @@ export async function fetchMediaDetails(
         ItemFields.Studios,
       ],
     });
-    return data;
+    return data.Items?.[0] ?? null;
   } catch (error) {
     console.error("Failed to fetch media details:", error);
 
