@@ -5,6 +5,7 @@ import { getSystemApi } from "@jellyfin/sdk/lib/utils/api/system-api";
 import {
   BaseItemDto,
   LogFile,
+  SystemInfo,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { MediaSourceInfo } from "@jellyfin/sdk/lib/generated-client/models/media-source-info";
 import axios from "axios";
@@ -793,5 +794,63 @@ export async function fetchLogContent(logName: string): Promise<string> {
   } catch (error) {
     console.error("Failed to fetch log content:", error);
     throw new Error("Could not fetch log content");
+  }
+}
+
+export async function fetchSystemInfo(): Promise<SystemInfo | null> {
+  const { serverUrl, user } = await getAuthData();
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
+  if (!user.AccessToken) throw new Error("No access token found");
+
+  api.accessToken = user.AccessToken;
+
+  try {
+    const systemApi = getSystemApi(api);
+    const { data } = await systemApi.getSystemInfo();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch system info:", error);
+    return null;
+  }
+}
+
+export async function restartServer(): Promise<void> {
+  const { serverUrl, user } = await getAuthData();
+
+  try {
+    const response = await fetch(`${serverUrl}/System/Restart`, {
+      method: "POST",
+      headers: {
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to restart server: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error("Failed to restart server:", error);
+    throw error;
+  }
+}
+
+export async function shutdownServer(): Promise<void> {
+  const { serverUrl, user } = await getAuthData();
+
+  try {
+    const response = await fetch(`${serverUrl}/System/Shutdown`, {
+      method: "POST",
+      headers: {
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to shutdown server: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error("Failed to shutdown server:", error);
+    throw error;
   }
 }

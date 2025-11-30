@@ -29,8 +29,8 @@ export {
   fetchLibraryItems,
   fetchLiveTVItems,
   fetchSimilarItems,
-  scanLibrary,
   fetchMovieByCollection,
+  scanLibrary,
 } from "./media";
 
 // TV show actions
@@ -65,6 +65,11 @@ export {
   reorderBackdropImage,
   deleteImage,
   getUserWithPolicy,
+  fetchScheduledTasks,
+  fetchJellyfinLogs,
+  fetchSystemInfo,
+  restartServer,
+  shutdownServer,
 } from "./utils";
 
 // Types
