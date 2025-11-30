@@ -61,6 +61,7 @@ import type { JellyfinUserWithToken } from "../../types/jellyfin";
 import { Link } from "react-router-dom";
 
 import { useSettings } from "../../contexts/settings-context";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
