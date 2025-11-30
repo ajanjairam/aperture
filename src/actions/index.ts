@@ -10,6 +10,8 @@ export {
   authenticateWithQuickConnect,
   logout,
   getUser,
+  changeUserPassword,
+  authorizeQuickConnectCode,
   isAuthenticated,
 } from "./auth";
 
@@ -27,8 +29,8 @@ export {
   fetchLibraryItems,
   fetchLiveTVItems,
   fetchSimilarItems,
-  scanLibrary,
   fetchMovieByCollection,
+  scanLibrary,
 } from "./media";
 
 // TV show actions
@@ -46,6 +48,7 @@ export { searchItems, searchPeople } from "./search";
 export {
   getImageUrl,
   getUserImageUrl,
+  uploadUserImage,
   getDownloadUrl,
   getStreamUrl,
   getDirectStreamUrl,
@@ -62,6 +65,11 @@ export {
   reorderBackdropImage,
   deleteImage,
   getUserWithPolicy,
+  fetchScheduledTasks,
+  fetchJellyfinLogs,
+  fetchSystemInfo,
+  restartServer,
+  shutdownServer,
 } from "./utils";
 
 // Types

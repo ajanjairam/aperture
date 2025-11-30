@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getThemeSongStreamUrl,
-  getThemeVideoStreamUrl,
-} from "../actions";
+import { getThemeSongStreamUrl, getThemeVideoStreamUrl } from "../actions";
 import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+import { useSettings } from "../contexts/settings-context";
 
 export function useThemeMedia(itemId?: string | null) {
   const [themeVideoUrl, setThemeVideoUrl] = useState<string | null>(null);
@@ -14,6 +12,7 @@ export function useThemeMedia(itemId?: string | null) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { isPlayerVisible } = useMediaPlayer();
+  const { enableThemeBackdrops, enableThemeSongs } = useSettings();
   const shouldResumeAudioRef = useRef(false);
   const shouldResumeVideoRef = useRef(false);
   const currentItemIdRef = useRef<string | null>(null);
@@ -64,7 +63,11 @@ export function useThemeMedia(itemId?: string | null) {
 
     const loadThemeMedia = async () => {
       try {
-        const videoUrl = await getThemeVideoStreamUrl(itemId);
+        let videoUrl = null;
+        if (enableThemeBackdrops) {
+          videoUrl = await getThemeVideoStreamUrl(itemId);
+        }
+
         if (cancelled) return;
 
         if (videoUrl) {
@@ -73,7 +76,11 @@ export function useThemeMedia(itemId?: string | null) {
           return;
         }
 
-        const songUrl = await getThemeSongStreamUrl(itemId);
+        let songUrl = null;
+        if (enableThemeSongs) {
+          songUrl = await getThemeSongStreamUrl(itemId);
+        }
+
         if (!cancelled) {
           setThemeSongUrl(songUrl);
         }
@@ -215,8 +222,7 @@ export function useThemeMedia(itemId?: string | null) {
     }
   }, []);
 
-  const showThemeVideo =
-    Boolean(themeVideoUrl) && videoReady && !videoFinished;
+  const showThemeVideo = Boolean(themeVideoUrl) && videoReady && !videoFinished;
   const shouldShowBackdropImage =
     !themeVideoUrl || !videoReady || videoFinished;
 

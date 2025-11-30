@@ -1,4 +1,6 @@
 import { SystemApi } from "@jellyfin/sdk/lib/generated-client/api/system-api";
+import { getUserApi } from "@jellyfin/sdk/lib/utils/api/user-api";
+import { getQuickConnectApi } from "@jellyfin/sdk/lib/utils/api/quick-connect-api";
 import { Configuration } from "@jellyfin/sdk/lib/generated-client/configuration";
 import type { UserDto } from "@jellyfin/sdk/lib/generated-client/models/user-dto";
 import { createJellyfinInstance } from "../lib/utils";
@@ -232,10 +234,9 @@ export async function authenticateUser(
   return false;
 }
 
-export async function isQuickConnectEnabled(): Promise<boolean> {
-  const serverUrl = await getServerUrl();
-  if (!serverUrl) return false;
-
+async function fetchQuickConnectEnabledPublic(
+  serverUrl: string
+): Promise<boolean | null> {
   try {
     const response = await fetch(`${serverUrl}/QuickConnect/Enabled`, {
       method: "GET",
@@ -246,11 +247,11 @@ export async function isQuickConnectEnabled(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      return false;
+      return null;
     }
 
     const text = await response.text();
-    if (!text) return false;
+    if (!text) return null;
 
     try {
       return Boolean(JSON.parse(text));
@@ -259,8 +260,61 @@ export async function isQuickConnectEnabled(): Promise<boolean> {
     }
   } catch (error) {
     console.error("Quick Connect availability check failed:", error);
-    return false;
+    return null;
   }
+}
+
+async function fetchQuickConnectEnabledWithAuth(
+  serverUrl: string
+): Promise<boolean | null> {
+  try {
+    const authData = await StoreAuthData.get();
+    if (!authData?.user) {
+      return null;
+    }
+
+    const storedUser = authData.user as JellyfinUserWithToken;
+    if (!storedUser.AccessToken) {
+      return null;
+    }
+
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = storedUser.AccessToken;
+
+    const quickConnectApi = getQuickConnectApi(api);
+    const { data } = await quickConnectApi.getQuickConnectEnabled();
+    return Boolean(data);
+  } catch (error) {
+    console.error(
+      "Authenticated Quick Connect availability check failed:",
+      error
+    );
+    return null;
+  }
+}
+
+export async function isQuickConnectEnabled(
+  allowAuthenticatedFallback: boolean = false
+): Promise<boolean> {
+  const serverUrl = await getServerUrl();
+  if (!serverUrl) return false;
+
+  const publicResult = await fetchQuickConnectEnabledPublic(serverUrl);
+  if (publicResult !== null) {
+    return publicResult;
+  }
+
+  if (allowAuthenticatedFallback) {
+    const authenticatedResult = await fetchQuickConnectEnabledWithAuth(
+      serverUrl
+    );
+    if (authenticatedResult !== null) {
+      return authenticatedResult;
+    }
+  }
+
+  return false;
 }
 
 export async function initiateQuickConnect(): Promise<QuickConnectResult | null> {
@@ -400,10 +454,97 @@ export async function getUser(): Promise<JellyfinUserWithToken | null> {
   }
 }
 
+export async function changeUserPassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const authData = await StoreAuthData.get();
+
+  if (!authData?.serverUrl || !authData.user) {
+    throw new Error("You must be signed in to update your password.");
+  }
+
+  const storedUser = authData.user as JellyfinUserWithToken;
+
+  if (!storedUser?.Id) {
+    throw new Error("We couldn't determine which user to update.");
+  }
+
+  if (!storedUser.AccessToken) {
+    throw new Error("Missing authentication token. Please sign in again.");
+  }
+
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(authData.serverUrl);
+  api.accessToken = storedUser.AccessToken;
+  const userApi = getUserApi(api);
+
+  try {
+    await userApi.updateUserPassword({
+      userId: storedUser.Id,
+      updateUserPassword: {
+        CurrentPw: currentPassword,
+        NewPw: newPassword,
+      },
+    });
+  } catch (error: any) {
+    console.error("Failed to update password:", error);
+
+    const serverMessage =
+      error?.response?.data?.Message ||
+      error?.response?.data?.ErrorMessage ||
+      error?.response?.data?.message;
+
+    throw new Error(
+      serverMessage || "Unable to update password. Please try again."
+    );
+  }
+}
+
 export async function isAuthenticated(): Promise<boolean> {
   const user = await getUser();
   const serverUrl = await getServerUrl();
   return !!(user && serverUrl);
+}
+
+export async function authorizeQuickConnectCode(code: string): Promise<void> {
+  if (!code.trim()) {
+    throw new Error("Enter a valid Quick Connect code.");
+  }
+
+  const authData = await StoreAuthData.get();
+  if (!authData?.serverUrl || !authData.user) {
+    throw new Error("You must be signed in to approve Quick Connect requests.");
+  }
+
+  const storedUser = authData.user as JellyfinUserWithToken;
+  if (!storedUser.Id || !storedUser.AccessToken) {
+    throw new Error("Missing account information. Please sign in again.");
+  }
+
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(authData.serverUrl);
+  api.accessToken = storedUser.AccessToken;
+
+  const quickConnectApi = getQuickConnectApi(api);
+
+  try {
+    await quickConnectApi.authorizeQuickConnect({
+      code,
+      userId: storedUser.Id,
+    });
+  } catch (error: any) {
+    console.error("Quick Connect authorization failed:", error);
+    const serverMessage =
+      error?.response?.data?.Message ||
+      error?.response?.data?.ErrorMessage ||
+      error?.response?.data?.message;
+
+    throw new Error(
+      serverMessage ||
+        "We couldn't authorize that code. Double-check it and try again."
+    );
+  }
 }
 
 // Debug function to test server connection and get server info
