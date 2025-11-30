@@ -334,15 +334,6 @@ export default function SettingsPage() {
                         ) : null}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full md:w-auto"
-                      onClick={() => handleAvatarDialogToggle(true)}
-                    >
-                      <Camera className="h-4 w-4" />
-                      View photo
-                    </Button>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-3">
