@@ -24,6 +24,10 @@ interface SettingsContextType {
   setVideoBitrate: (bitrate: string) => void;
   playbackMode: PlaybackMode;
   setPlaybackMode: (mode: PlaybackMode) => void;
+  enableThemeBackdrops: boolean;
+  setEnableThemeBackdrops: (enable: boolean) => void;
+  enableThemeSongs: boolean;
+  setEnableThemeSongs: (enable: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -34,6 +38,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [videoBitrate, setVideoBitrateState] = useState<string>("auto");
   const [playbackMode, setPlaybackModeState] =
     useState<PlaybackMode>("direct");
+  const [enableThemeBackdrops, setEnableThemeBackdropsState] = useState(true);
+  const [enableThemeSongs, setEnableThemeSongsState] = useState(true);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -49,6 +55,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     if (savedPlaybackMode === "direct" || savedPlaybackMode === "transcode") {
       setPlaybackModeState(savedPlaybackMode);
     }
+
+    const savedThemeBackdrops = localStorage.getItem(
+      "aperture-enable-theme-backdrops"
+    );
+    if (savedThemeBackdrops !== null) {
+      setEnableThemeBackdropsState(savedThemeBackdrops === "true");
+    }
+
+    const savedThemeSongs = localStorage.getItem("aperture-enable-theme-songs");
+    if (savedThemeSongs !== null) {
+      setEnableThemeSongsState(savedThemeSongs === "true");
+    }
   }, []);
 
   // Save to localStorage when states change
@@ -62,6 +80,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("aperture-playback-mode", mode);
   };
 
+  const setEnableThemeBackdrops = (enable: boolean) => {
+    setEnableThemeBackdropsState(enable);
+    localStorage.setItem("aperture-enable-theme-backdrops", String(enable));
+  };
+
+  const setEnableThemeSongs = (enable: boolean) => {
+    setEnableThemeSongsState(enable);
+    localStorage.setItem("aperture-enable-theme-songs", String(enable));
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -69,6 +97,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setVideoBitrate,
         playbackMode,
         setPlaybackMode,
+        enableThemeBackdrops,
+        setEnableThemeBackdrops,
+        enableThemeSongs,
+        setEnableThemeSongs,
       }}
     >
       {children}
