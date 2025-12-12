@@ -40,7 +40,7 @@ export function HeroSection({ serverUrl }: HeroSectionProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="w-full mb-8 relative px-4 fade-in animate-in duration-500">
+    <div className="w-full mb-8 relative fade-in animate-in duration-500">
       <HeroCarousel items={items} serverUrl={serverUrl!} />
     </div>
   );
