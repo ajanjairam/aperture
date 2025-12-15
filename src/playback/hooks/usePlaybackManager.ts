@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { BaseItemDto, MediaSourceInfo } from "@jellyfin/sdk/lib/generated-client/models";
-import { markFavorite, unmarkFavorite, getStreamUrl, fetchMediaDetails } from '../../actions';
+import { markFavorite, unmarkFavorite, getStreamUrl, fetchMediaDetails, getSubtitleTracks } from '../../actions';
 import { PlaybackState, Player, PlayOptions, PlayerType } from '../types';
 import { PlayQueueManager } from '../utils/playQueueManager';
 
@@ -124,14 +124,46 @@ export function usePlaybackManager(): PlaybackContextValue {
             mediaSource = itemToPlay!.MediaSources[0];
         }
 
+        // Fetch Sidecar Subtitles (VTT)
+        try {
+             if (mediaSource?.Id && itemToPlay!.Id) {
+                 const subs = await getSubtitleTracks(itemToPlay!.Id!, mediaSource.Id);
+                 
+                 // Apply selection logic
+                 const targetIndex = options.subtitleStreamIndex; 
+                 
+                 if (targetIndex !== undefined) {
+                     options.textTracks = subs.map(t => ({
+                         ...t,
+                         default: t.index === targetIndex
+                     }));
+                 } else {
+                     options.textTracks = subs;
+                 }
+             }
+        } catch (e) {
+            console.error("Failed to load sidecar subtitles", e);
+        }
+
         // Generate URL if missing
         if (!options.url && mediaSource && mediaSource.Id && itemToPlay!.Id) {
              try {
+                // Optimize burn-in: If we have sidecar for selected index, don't burn in.
+                let urlSubtitleIndex = options.subtitleStreamIndex;
+                if (options.textTracks && urlSubtitleIndex !== undefined && urlSubtitleIndex !== -1) {
+                    const hasSidecar = options.textTracks.some(t => t.index === urlSubtitleIndex);
+                    if (hasSidecar) {
+                        urlSubtitleIndex = -1; 
+                    }
+                }
+
                 options.url = await getStreamUrl(
                     itemToPlay!.Id!, 
                     mediaSource.Id, 
                     undefined, 
-                    options.videoBitrate
+                    options.videoBitrate,
+                    options.audioStreamIndex,
+                    urlSubtitleIndex
                 );
              } catch (e) {
                  console.error("Failed to generate stream URL", e);
@@ -278,8 +310,24 @@ export function usePlaybackManager(): PlaybackContextValue {
     }, []);
 
     const setSubtitleStreamIndex = useCallback((index: number) => {
-        activePlayerRef.current?.setSubtitleStreamIndex(index);
-    }, []);
+        // Reload stream with new subtitle index (handles burn-in/transcoding)
+        const item = playbackState.currentItem;
+        if (!item) return;
+
+        const startTicks = Math.floor(playbackState.currentTime * 10000000);
+        
+        play(item, {
+            mediaSourceId: playbackState.currentMediaSource?.Id || undefined,
+            startPositionTicks: startTicks,
+            subtitleStreamIndex: index,
+            // Preserve audio stream if needed? options.audioStreamIndex?
+            // We don't have it tracked in state explicitly except potentially inside the player.
+            // But usually default is fine unless user changed audio.
+            // TODO: Track audioStreamIndex in state for full persistence.
+        });
+        
+        updateState({ subtitleStreamIndex: index });
+    }, [play, playbackState, updateState]);
 
     const setPreferredQuality = useCallback((quality: string) => {
         updateState({ preferredQuality: quality });

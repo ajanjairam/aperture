@@ -201,7 +201,8 @@ export async function getStreamUrl(
   mediaSourceId: string,
   quality?: string,
   videoBitrate?: number,
-  audioStreamIndex: number = 1
+  audioStreamIndex: number = 1,
+  subtitleStreamIndex?: number
 ): Promise<string> {
   const { serverUrl, user } = await getAuthData();
   const supportsHevc = canBrowserDirectPlayHevc();
@@ -213,6 +214,10 @@ export async function getStreamUrl(
   const playSessionId = uuidv4();
 
   let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${playSessionId}&VideoCodec=${preferredVideoCodecs}&AudioCodec=aac,mp3&TranscodingProtocol=hls&RequireAvc=${requireAvc}&AllowVideoStreamCopy=${allowVideoStreamCopy}&AudioStreamIndex=${audioStreamIndex}`;
+
+  if (subtitleStreamIndex !== undefined) {
+    url += `&SubtitleStreamIndex=${subtitleStreamIndex}`;
+  }
 
   // Apply custom bitrate if specified (takes precedence over quality presets)
   if (videoBitrate && videoBitrate > 0) {
@@ -347,6 +352,7 @@ export async function getSubtitleTracks(
     language: string;
     src: string;
     default?: boolean;
+    index: number;
   }>
 > {
   const { serverUrl, user } = await getAuthData();
@@ -372,7 +378,7 @@ export async function getSubtitleTracks(
         (stream) => stream.Type === "Subtitle"
       ) || [];
     const subtitleTracks = subtitleStreams.map((stream) => {
-      const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.js?api_key=${user.AccessToken}`;
+      const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.vtt?api_key=${user.AccessToken}`;
       return {
         kind: "subtitles",
         label:
@@ -380,6 +386,7 @@ export async function getSubtitleTracks(
         language: stream.Language || "unknown",
         src: src,
         default: stream.IsDefault || false,
+        index: stream.Index ?? -1,
       };
     });
 

@@ -107,6 +107,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({ manager }) => {
         manager.reportState({ subtitleOffset: newOffset });
     };
 
+    console.log(subtitleTracks,playbackState)
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -140,13 +142,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({ manager }) => {
                     </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
-                {/* Subtitles */}
+                 {/* Subtitles */}
                  <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
                         <span className="flex-1">Subtitles</span>
                         <span className="text-xs text-gray-400 ml-2">
                             {playbackState.subtitleOffset !== 0 ? `(${playbackState.subtitleOffset}ms) ` : ''}
-                            {subtitleTracks.length > 0 ? "Select" : "None"}
+                            {subtitleTracks.find(t => t.index === playbackState.subtitleStreamIndex)?.label || (playbackState.subtitleStreamIndex === -1 ? "Off" : (subtitleTracks.length > 0 ? "Select" : "None"))}
                         </span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="bg-black/90 text-white border-gray-800 rounded-md">
@@ -157,12 +159,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({ manager }) => {
                              <Button variant="outline" size="sm" onClick={() => adjustSubtitleOffset(100)} className="h-6 text-xs">+100ms</Button>
                          </div>
                          <DropdownMenuSeparator className="bg-gray-700 my-1" />
-                        <DropdownMenuRadioGroup value={""} onValueChange={handleSubtitleChange}>
+                        <DropdownMenuRadioGroup value={String(playbackState.subtitleStreamIndex ?? -1)} onValueChange={handleSubtitleChange}>
                              <DropdownMenuRadioItem value="-1">Off</DropdownMenuRadioItem>
                             {subtitleTracks.map((track, i) => (
                                 <DropdownMenuRadioItem 
                                     key={i} 
-                                    value={String(track.Index ?? i)} 
+                                    value={String(track.index)} 
                                 >
                                     {track.label}
                                 </DropdownMenuRadioItem>

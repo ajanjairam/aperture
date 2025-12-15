@@ -11,6 +11,14 @@ export interface PlayOptions {
   startPosition?: number;
   url?: string;
   videoBitrate?: number;
+  textTracks?: Array<{
+    kind: string;
+    label: string;
+    src: string;
+    language: string;
+    default?: boolean;
+    index: number;
+  }>;
 }
 
 export type PlayerType = 'Video' | 'Audio' | 'Youtube' | 'Phote';
@@ -29,6 +37,7 @@ export interface PlaybackState {
   currentItem: BaseItemDto | null;
   playMethod: 'DirectPlay' | 'DirectStream' | 'Transcode' | null;
   subtitleOffset: number;
+  subtitleStreamIndex?: number;
   aspectRatio: string;
   repeatMode: 'Off' | 'All' | 'One';
   preferredQuality: string;

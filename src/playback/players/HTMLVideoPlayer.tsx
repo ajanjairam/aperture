@@ -27,6 +27,7 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
     subtitleOffset = 0,
     onDurationChange
 }, ref) => {
+    const [textTracks, setTextTracks] = useState<any[]>([]);
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
     
@@ -43,19 +44,30 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
         }
         if (videoRef.current) {
             videoRef.current.pause();
-            videoRef.current.src = '';
+            videoRef.current.removeAttribute('src'); // Clear src attribute
             videoRef.current.load();
         }
+        setTextTracks([]); // Clear tracks on reset
     };
 
     const playInternal = async (url: string, options: PlayOptions) => {
         if (!videoRef.current) return;
+        console.log(`[HTMLVideoPlayer] Playing URL: ${url}`, options);
+
         if (!url) {
             console.error("HTMLVideoPlayer: No URL provided for playback");
             return;
         }
 
-        resetPlayer();
+        // Don't call full resetPlayer here as it clears tracks we want to set, 
+        // but we need to ensure clean slate.
+        if (hlsRef.current) {
+            hlsRef.current.destroy();
+            hlsRef.current = null;
+        }
+        
+        // Update tracks state
+        setTextTracks(options.textTracks || []);
 
         const startTicks = options.startPositionTicks || 0;
         const seconds = startTicks / 10000000;
@@ -74,6 +86,13 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
                  hlsRef.current = hls;
 
                  hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                     console.log('[HTMLVideoPlayer] Manifest Parsed. Subtitle Tracks:', hls.subtitleTracks);
+                     if (hls.subtitleTracks.length > 0) {
+                         // Force enable if tracks exist
+                         hls.subtitleDisplay = true;
+                         console.log('[HTMLVideoPlayer] Enabled hls.subtitleDisplay');
+                     }
+
                      if (videoRef.current) {
                          videoRef.current.currentTime = seconds;
                          videoRef.current.play().catch(e => onError?.(e));
@@ -195,7 +214,18 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
             className={`w-full h-full bg-black ${className}`}
             crossOrigin="anonymous"
             playsInline
-        />
+        >
+            {textTracks.map((track, i) => (
+                <track
+                    key={`${i}-${track.src}`}
+                    kind={track.kind}
+                    label={track.label}
+                    srcLang={track.language}
+                    src={track.src}
+                    default={track.default}
+                />
+            ))}
+        </video>
     );
 });
 
