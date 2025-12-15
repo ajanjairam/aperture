@@ -77,6 +77,15 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
     const displayTime = scrubbingValue !== null ? scrubbingValue : currentSeconds;
     const activeThumbTime = scrubbingValue !== null ? scrubbingValue : hoverTime;
     const thumbnail = activeThumbTime !== null ? renderThumbnail(activeThumbTime) : null;
+    
+    // Calculate Active Chapter
+    const chapters = (currentItem as any)?.Chapters || [];
+    const activeChapter = activeThumbTime !== null ? chapters.find((ch: any, i: number) => {
+        const start = ch.StartPositionTicks / 10000000;
+        const nextCh = chapters[i + 1];
+        const end = nextCh ? nextCh.StartPositionTicks / 10000000 : durationSeconds;
+        return activeThumbTime >= start && activeThumbTime < end;
+    }) : null;
 
     let thumbStyle: React.CSSProperties = {};
     if (thumbnail) {
@@ -195,11 +204,33 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
                                 className="absolute bottom-10 border-2 border-white rounded-md overflow-hidden shadow-lg bg-black z-30 pointer-events-none transition-opacity duration-200"
                                 style={thumbStyle}
                             >
-                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/70 px-1 rounded text-[10px] text-white font-mono">
-                                    {formatVideoTime(activeThumbTime * 10000000, durationSeconds * 10000000).split(' / ')[0]}
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-full px-2">
+                                     {activeChapter && (
+                                         <span className="text-[10px] text-white/90 font-medium truncate max-w-full drop-shadow-md text-center">
+                                             {activeChapter.Name}
+                                         </span>
+                                     )}
+                                    <div className="bg-black/70 px-1 rounded text-[10px] text-white font-mono">
+                                        {formatVideoTime(activeThumbTime * 10000000, durationSeconds * 10000000).split(' / ')[0]}
+                                    </div>
                                 </div>
                             </div>
                         )}
+
+                        {/* Chapter Markers */}
+                        {chapters.map((chapter: any, index: number) => {
+                             const startSeconds = chapter.StartPositionTicks / 10000000;
+                             if (startSeconds <= 0) return null; // Skip start marker
+                             const leftPct = (startSeconds / durationSeconds) * 100;
+                             
+                             return (
+                                 <div 
+                                     key={index}
+                                     className="absolute top-1/2 -translate-y-1/2 w-[2px] h-2 bg-white/40 z-10 pointer-events-none group-hover/slider:h-4 transition-all duration-200"
+                                     style={{ left: `${leftPct}%` }}
+                                 />
+                             );
+                        })}
 
                         <Slider 
                             value={[displayTime]} 
