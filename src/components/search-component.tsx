@@ -187,7 +187,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
 
   return (
     <div
-      className={`relative z-[9999] md:max-w-xl ${className}`}
+      className={`relative z-[99] md:max-w-xl ${className}`}
       ref={suggestionsRef}
     >
       <form onSubmit={handleSearch} className="flex gap-2">
@@ -222,7 +222,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
 
       {/* Search Suggestions Dropdown */}
       {(showSuggestions || isLoading) && (
-        <div className="absolute top-full left-0 right-0 mt-2 dark:bg-background/70! bg-background/90 backdrop-blur-md rounded-xl border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 dark:bg-background/70! bg-background/90 backdrop-blur-md rounded-xl border shadow-xl shadow-accent/30 z-[99] max-h-96 overflow-y-auto">
           {isLoading && loadingComponent}
 
           {!isLoading && suggestions.length > 0 && (
