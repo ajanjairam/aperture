@@ -57,6 +57,22 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
         handleMouseMove();
         paused ? manager.unpause() : manager.pause();
     };
+
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        const handleChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', handleChange);
+        return () => document.removeEventListener('fullscreenchange', handleChange);
+    }, []);
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(e => console.error("Fullscreen error:", e));
+        } else {
+            document.exitFullscreen().catch(e => console.error("Exit fullscreen error:", e));
+        }
+    };
     
     // Stop propagation for controls so they don't trigger the overlay click
     const handleControlsClick = (e: React.MouseEvent) => {
@@ -165,6 +181,9 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
                             <Heart className={`w-6 h-6 ${currentItem?.UserData?.IsFavorite ? 'text-red-500 fill-red-500' : 'text-white'}`} />
                          </Button>
                          <SettingsMenu manager={manager} />
+                         <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+                            {isFullscreen ? <Minimize className="w-6 h-6 text-white" /> : <Maximize className="w-6 h-6 text-white" />}
+                         </Button>
                     </div>
                 </div>
             </div>
