@@ -9,7 +9,8 @@ import { Button } from '../../components/ui/button';
 import { 
     Play, Pause, Volume2, VolumeX, 
     Settings, Maximize, Minimize, ArrowLeft,
-    RotateCcw, RotateCw, Heart, SkipForward
+    RotateCcw, RotateCw, Heart, SkipForward,
+    PictureInPicture, PictureInPicture2
 } from 'lucide-react';
 import { formatVideoTime } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,7 @@ interface VideoOSDProps {
 
 export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
     const { playbackState } = manager;
-    const { paused, currentTime, duration, currentItem, currentMediaSource, volume, muted } = playbackState;
+    const { paused, currentTime, duration, currentItem, currentMediaSource, volume, muted, isMiniPlayer } = playbackState;
     const { initializeTrickplay, renderThumbnail } = useTrickplay();
     const { checkSegment } = useSkipSegments(currentItem?.Id);
     const activeSegment = checkSegment(currentTime);
@@ -136,6 +137,19 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
     };
 
 
+
+    if (isMiniPlayer) {
+        return (
+            <div 
+                className="absolute inset-0 z-50 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-all duration-300 cursor-pointer group"
+                onClick={manager.toggleMiniPlayer}
+            >
+                <div className="bg-black/50 p-3 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-300">
+                     <Maximize className="w-6 h-6 text-white" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div 
@@ -307,6 +321,9 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
                          {/* Like Button */}
                          <Button variant="ghost" size="icon" onClick={() => manager.toggleFavorite()}>
                             <Heart className={`w-6 h-6 ${currentItem?.UserData?.IsFavorite ? 'text-red-500 fill-red-500' : 'text-white'}`} />
+                         </Button>
+                         <Button variant="ghost" size="icon" onClick={manager.toggleMiniPlayer}>
+                            <PictureInPicture className="w-6 h-6 text-white" />
                          </Button>
                          <SettingsMenu manager={manager} />
                          <Button variant="ghost" size="icon" onClick={toggleFullscreen}>

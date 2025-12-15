@@ -28,6 +28,8 @@ export interface PlaybackContextValue {
     unregisterPlayer: (type: PlayerType) => void;
     reportState: (updates: Partial<PlaybackState>) => void;
     setPreferredQuality: (quality: string) => void;
+    toggleMiniPlayer: () => void;
+    setMiniPlayer: (enabled: boolean) => void;
 }
 
 export function usePlaybackManager(): PlaybackContextValue {
@@ -52,6 +54,7 @@ export function usePlaybackManager(): PlaybackContextValue {
         aspectRatio: 'contain',
         repeatMode: 'Off',
         preferredQuality: 'auto',
+        isMiniPlayer: false,
     });
 
     const activePlayerRef = useRef<Player | null>(null);
@@ -393,6 +396,14 @@ export function usePlaybackManager(): PlaybackContextValue {
         updateState({ preferredQuality: quality });
     }, [updateState]);
 
+    const toggleMiniPlayer = useCallback(() => {
+        setPlaybackState(prev => ({ ...prev, isMiniPlayer: !prev.isMiniPlayer }));
+    }, []);
+
+    const setMiniPlayer = useCallback((enabled: boolean) => {
+        setPlaybackState(prev => ({ ...prev, isMiniPlayer: enabled }));
+    }, []);
+
     return {
         playbackState,
         play,
@@ -412,6 +423,8 @@ export function usePlaybackManager(): PlaybackContextValue {
         registerPlayer,
         unregisterPlayer,
         reportState: updateState,
-        setPreferredQuality
+        setPreferredQuality,
+        toggleMiniPlayer,
+        setMiniPlayer
     };
 }

@@ -42,6 +42,7 @@ export interface PlaybackState {
   aspectRatio: string;
   repeatMode: 'Off' | 'All' | 'One';
   preferredQuality: string;
+  isMiniPlayer?: boolean;
 }
 
 export interface Player {
