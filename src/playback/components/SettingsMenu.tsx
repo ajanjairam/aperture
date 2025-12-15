@@ -123,11 +123,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({ manager }) => {
                     <DropdownMenuSubTrigger>
                         <span className="flex-1">Audio</span>
                         <span className="text-xs text-gray-400 ml-2">
-                             {audioTracks.find(t => String(t.id) === (playbackState.currentMediaSource?.MediaStreams?.find(s => s.Type === 'Audio' && s.IsDefault)?.Index?.toString() ?? "1"))?.label || "Default"}
+                             {audioTracks.find(t => t.id === playbackState.audioStreamIndex)?.label || "Default"}
                         </span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="bg-black/90 text-white border-gray-800 rounded-md">
-                        <DropdownMenuRadioGroup value={""} onValueChange={handleAudioChange}>
+                        <DropdownMenuRadioGroup value={String(playbackState.audioStreamIndex || "")} onValueChange={handleAudioChange}>
                             {audioTracks.map((track) => (
                                 <DropdownMenuRadioItem 
                                     key={track.id ?? track.label} 

@@ -153,6 +153,12 @@ export function usePlaybackManager(): PlaybackContextValue {
             console.error("Failed to load sidecar subtitles", e);
         }
 
+        // Determine Default Audio Stream
+        if (options.audioStreamIndex === undefined && mediaSource?.MediaStreams) {
+             const defaultAudio = mediaSource.MediaStreams.find(s => s.Type === 'Audio' && s.IsDefault);
+             options.audioStreamIndex = defaultAudio ? defaultAudio.Index : (mediaSource.MediaStreams.find(s => s.Type === 'Audio')?.Index ?? 1);
+        }
+
         // Generate URL if missing
         if (!options.url && mediaSource && mediaSource.Id && itemToPlay!.Id) {
              try {
@@ -186,7 +192,8 @@ export function usePlaybackManager(): PlaybackContextValue {
             isEnded: false, 
             currentTime: 0, 
             duration: (itemToPlay!.RunTimeTicks || 0) / 10000000,
-            subtitleStreamIndex: options.subtitleStreamIndex
+            subtitleStreamIndex: options.subtitleStreamIndex,
+            audioStreamIndex: options.audioStreamIndex
         });
 
         try {
@@ -315,8 +322,20 @@ export function usePlaybackManager(): PlaybackContextValue {
     // ...
 
     const setAudioStreamIndex = useCallback((index: number) => {
-        activePlayerRef.current?.setAudioStreamIndex(index);
-    }, []);
+        const item = playbackState.currentItem;
+        if (!item) return;
+
+        const startTicks = Math.floor(playbackState.currentTime * 10000000);
+
+        play(item, {
+            mediaSourceId: playbackState.currentMediaSource?.Id || undefined,
+            startPositionTicks: startTicks,
+            subtitleStreamIndex: playbackState.subtitleStreamIndex,
+            audioStreamIndex: index
+        });
+        
+        updateState({ audioStreamIndex: index });
+    }, [play, playbackState.currentItem, playbackState.currentMediaSource, playbackState.currentTime, playbackState.subtitleStreamIndex, updateState]);
 
     const setSubtitleStreamIndex = useCallback(async (index: number) => {
         const item = playbackState.currentItem;
