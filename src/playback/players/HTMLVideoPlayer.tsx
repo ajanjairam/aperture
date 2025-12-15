@@ -12,6 +12,7 @@ interface HTMLVideoPlayerProps {
     onPlay?: () => void;
     onError?: (error: any) => void;
     onVolumeChange?: (volume: number) => void;
+    subtitleOffset?: number;
 }
 
 export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
@@ -21,13 +22,14 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
     onPause,
     onPlay,
     onError,
-    onVolumeChange
+    onVolumeChange,
+    subtitleOffset = 0
 }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
     
     // We might need to expose these via context or props for the OSD overlay
-    const [subtitleOffset, setSubtitleOffset] = useState(0);
+    // const [subtitleOffset, setSubtitleOffset] = useState(0); // This useState is replaced by the prop
 
     useImperativeHandle(ref, () => ({
         name: 'HTML Video Player',
@@ -94,6 +96,10 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
 
     const playInternal = async (url: string, options: PlayOptions) => {
         if (!videoRef.current) return;
+        if (!url) {
+            console.error("HTMLVideoPlayer: No URL provided for playback");
+            return;
+        }
 
         resetPlayer();
 
@@ -179,7 +185,7 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
     return (
         <video 
             ref={videoRef}
-            className={`w-full h-full object-contain bg-black ${className}`}
+            className={`w-full h-full bg-black ${className}`}
             crossOrigin="anonymous"
             playsInline
         />

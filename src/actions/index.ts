@@ -31,6 +31,8 @@ export {
   fetchSimilarItems,
   fetchMovieByCollection,
   scanLibrary,
+  markFavorite,
+  unmarkFavorite,
 } from "./media";
 
 // TV show actions

@@ -5,6 +5,7 @@ import { HTMLAudioPlayer } from '../players/HTMLAudioPlayer';
 import { PlaybackControls } from './PlaybackControls';
 import { PlaybackContextValue, usePlaybackManager } from '../hooks/usePlaybackManager';
 import { Player } from '../types';
+import { VideoOSD } from './VideoOSD';
 
 interface JellyfinPlayerProps {
     className?: string;
@@ -34,56 +35,62 @@ export const JellyfinPlayer: React.FC<JellyfinPlayerProps> = ({
         }
     }, [item?.Id]); // Only re-run if item ID changes
 
-    // Determine type to show appropriate UI
-    const mediaType = playbackState.currentItem?.MediaType as string | undefined;
+    const activePlayerType = playbackState.currentItem 
+        ? (['Audio', 'Music'].includes(playbackState.currentItem.MediaType as string) ? 'Audio' : 'Video')
+        : 'Video';
+
     const isVideo = playbackState.currentItem 
-        && (mediaType === 'Video' 
-            || mediaType === 'Movie' 
-            || mediaType === 'Episode' 
-            || mediaType === 'TvChannel');
+        && (activePlayerType === 'Video');
+
+    const aspectRatioClass = 
+        playbackState.aspectRatio === 'fill' ? 'object-fill' :
+        playbackState.aspectRatio === 'cover' ? 'object-cover' :
+        'object-contain';
 
     return (
-        <div className={`relative group ${className}`}>
-            {/* Players - always mounted but hidden if not active to preserve state if needed or for preloading */}
-            {/* In a real app we might wan to unmount unused players */}
-            
-            <HTMLVideoPlayer 
-                ref={(player: Player | null) => {
-                    if (player) manager.registerPlayer('Video', player);
-                    else manager.unregisterPlayer('Video');
-                }}
-                className={isVideo ? 'block' : 'hidden'}
-                onTimeUpdate={(time) => {
-                    manager.reportState({ currentTime: time });
-                }}
-                onEnded={() => {
-                    manager.reportState({ isEnded: true });
-                    manager.next();
-                }}
-            />
-            
-            <HTMLAudioPlayer 
-                ref={(player: Player | null) => {
-                    if (player) manager.registerPlayer('Audio', player);
-                    else manager.unregisterPlayer('Audio');
-                }}
-                className={playbackState.currentItem?.MediaType === 'Audio' ? 'block' : 'hidden'} // Audio player is usually hidden anyway
-            />
+        <div className={`relative bg-black flex flex-col justify-center items-center ${className} group`}>
+             <div className="w-full h-full"> 
+                {/* Render the appropriate player */}
+                <HTMLVideoPlayer 
+                    ref={(player: Player | null) => {
+                        if (player) manager.registerPlayer('Video', player);
+                        else manager.unregisterPlayer('Video');
+                    }}
+                    className={activePlayerType === 'Video' ? `block w-full h-full ${aspectRatioClass}` : 'hidden'}
+                    subtitleOffset={playbackState.subtitleOffset || 0}
+                    onTimeUpdate={(time) => {
+                         manager.reportState({ currentTime: time });
+                    }}
+                    onEnded={() => {
+                         manager.reportState({ isEnded: true });
+                         manager.next();
+                    }}
+                />
+                <HTMLAudioPlayer 
+                    ref={(player: Player | null) => {
+                        if (player) manager.registerPlayer('Audio', player);
+                        else manager.unregisterPlayer('Audio');
+                    }}
+                    className={activePlayerType === 'Audio' ? 'block' : 'hidden'} 
+                />
+             </div>
 
             {/* Overlay Controls */}
-            {playbackState.currentItem && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <PlaybackControls 
-                        playbackState={playbackState}
-                        onPlayPause={() => playbackState.paused ? manager.unpause() : manager.pause()}
-                        onSeek={manager.seek}
-                        onVolumeChange={manager.setVolume}
-                        onToggleMute={manager.toggleMute}
-                        onNext={manager.next}
-                        onPrevious={manager.previous}
-                    />
-                </div>
-            )}
+             {isVideo ? (
+                 <VideoOSD manager={manager} />
+             ) : (
+                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                     <PlaybackControls 
+                         playbackState={manager.playbackState}
+                         onPlayPause={() => manager.playbackState.paused ? manager.unpause() : manager.pause()}
+                         onSeek={manager.seek}
+                         onVolumeChange={manager.setVolume}
+                         onToggleMute={manager.toggleMute}
+                         onNext={manager.next}
+                         onPrevious={manager.previous}
+                     />
+                 </div>
+             )}
         </div>
     );
 };

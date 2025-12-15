@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { BaseItemDto, MediaSourceInfo } from "@jellyfin/sdk/lib/generated-client/models";
+import { markFavorite, unmarkFavorite, getStreamUrl, fetchMediaDetails } from '../../actions';
 import { PlaybackState, Player, PlayOptions, PlayerType } from '../types';
 import { PlayQueueManager } from '../utils/playQueueManager';
 
@@ -19,10 +20,14 @@ export interface PlaybackContextValue {
     setVolume: (volume: number) => void;
     setMute: (mute: boolean) => void;
     toggleMute: () => void;
+    toggleFavorite: () => Promise<void>;
     setPlaybackRate: (rate: number) => void;
+    setAudioStreamIndex: (index: number) => void;
+    setSubtitleStreamIndex: (index: number) => void;
     registerPlayer: (type: PlayerType, player: Player) => void;
     unregisterPlayer: (type: PlayerType) => void;
     reportState: (updates: Partial<PlaybackState>) => void;
+    setPreferredQuality: (quality: string) => void;
 }
 
 export function usePlaybackManager(): PlaybackContextValue {
@@ -43,6 +48,10 @@ export function usePlaybackManager(): PlaybackContextValue {
         currentMediaSource: null,
         currentItem: null,
         playMethod: null,
+        subtitleOffset: 0,
+        aspectRatio: 'contain',
+        repeatMode: 'Off',
+        preferredQuality: 'auto',
     });
 
     const activePlayerRef = useRef<Player | null>(null);
@@ -82,8 +91,8 @@ export function usePlaybackManager(): PlaybackContextValue {
         playQueueManager.setPlaylistIndex(0);
 
         // Play first item
-        const itemToPlay = playQueueManager.getCurrentItem();
-        if (!itemToPlay) return;
+        let itemToPlay = playQueueManager.getCurrentItem();
+        if (!itemToPlay || !itemToPlay.Id) return;
 
         const player = getPlayerForMedia(itemToPlay);
         if (!player) {
@@ -96,11 +105,51 @@ export function usePlaybackManager(): PlaybackContextValue {
             activePlayerRef.current.stop(true);
         }
 
+        // Ensure we have full item details (MediaSources)
+        if (!itemToPlay.MediaSources || itemToPlay.MediaSources.length === 0) {
+            try {
+                const fullItem = await fetchMediaDetails(itemToPlay.Id!);
+                if (fullItem) {
+                    itemToPlay = { ...itemToPlay, ...fullItem } as any;
+                }
+            } catch (e) {
+                console.error("Failed to fetch full media details", e);
+            }
+        }
+
+        // Determine Media Source
+        const mediaSourceId = options.mediaSourceId;
+        let mediaSource = itemToPlay!.MediaSources?.find(ms => ms.Id === mediaSourceId);
+        if (!mediaSource && itemToPlay!.MediaSources && itemToPlay!.MediaSources.length > 0) {
+            mediaSource = itemToPlay!.MediaSources[0];
+        }
+
+        // Generate URL if missing
+        if (!options.url && mediaSource && mediaSource.Id && itemToPlay!.Id) {
+             try {
+                options.url = await getStreamUrl(
+                    itemToPlay!.Id!, 
+                    mediaSource.Id, 
+                    undefined, 
+                    options.videoBitrate
+                );
+             } catch (e) {
+                 console.error("Failed to generate stream URL", e);
+             }
+        }
+
         activePlayerRef.current = player;
-        updateState({ currentItem: itemToPlay, paused: false, isEnded: false, currentTime: 0, duration: 0 });
+        updateState({ 
+            currentItem: itemToPlay!, 
+            currentMediaSource: mediaSource || null,
+            paused: false, 
+            isEnded: false, 
+            currentTime: 0, 
+            duration: 0 
+        });
 
         try {
-            await player.play(itemToPlay, options);
+            await player.play(itemToPlay!, options);
             // Volume/Mute sync
             // player.setVolume(playbackState.volume);
             // player.setMute(playbackState.muted);
@@ -169,6 +218,45 @@ export function usePlaybackManager(): PlaybackContextValue {
         setMute(newMute);
     }, [playbackState.muted, setMute]);
 
+    const toggleFavorite = useCallback(async () => {
+        const item = playbackState.currentItem;
+        if (!item || !item.Id || !item.UserData) return;
+
+        const isFavorite = item.UserData.IsFavorite;
+        const newFavoriteState = !isFavorite;
+
+        // Optimistic update
+        updateState({
+            currentItem: {
+                ...item,
+                UserData: {
+                    ...item.UserData,
+                    IsFavorite: newFavoriteState
+                }
+            }
+        });
+
+        try {
+            if (newFavoriteState) {
+                await markFavorite(item.Id);
+            } else {
+                await unmarkFavorite(item.Id);
+            }
+        } catch (error) {
+            console.error("Failed to toggle favorite", error);
+            // Revert on failure
+             updateState({
+                currentItem: {
+                    ...item,
+                    UserData: {
+                        ...item.UserData,
+                        IsFavorite: isFavorite
+                    }
+                }
+            });
+        }
+    }, [playbackState.currentItem, updateState]);
+
     const setPlaybackRate = useCallback((rate: number) => {
         activePlayerRef.current?.setPlaybackRate(rate);
         updateState({ playbackRate: rate });
@@ -179,6 +267,18 @@ export function usePlaybackManager(): PlaybackContextValue {
     
     // ...
     // ...
+
+    const setAudioStreamIndex = useCallback((index: number) => {
+        activePlayerRef.current?.setAudioStreamIndex(index);
+    }, []);
+
+    const setSubtitleStreamIndex = useCallback((index: number) => {
+        activePlayerRef.current?.setSubtitleStreamIndex(index);
+    }, []);
+
+    const setPreferredQuality = useCallback((quality: string) => {
+        updateState({ preferredQuality: quality });
+    }, [updateState]);
 
     return {
         playbackState,
@@ -192,9 +292,13 @@ export function usePlaybackManager(): PlaybackContextValue {
         setVolume,
         setMute,
         toggleMute,
+        toggleFavorite,
         setPlaybackRate,
+        setAudioStreamIndex,
+        setSubtitleStreamIndex,
         registerPlayer,
         unregisterPlayer,
-        reportState: updateState
+        reportState: updateState,
+        setPreferredQuality
     };
 }
