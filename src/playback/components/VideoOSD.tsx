@@ -5,6 +5,7 @@ import { PlaybackContextValue } from '../hooks/usePlaybackManager';
 import { Slider } from '../../components/ui/slider';
 import { useTrickplay } from '../../hooks/useTrickplay';
 import { useSkipSegments } from '../../hooks/useSkipSegments';
+import { VideoSplashLoader } from './VideoSplashLoader';
 import { Button } from '../../components/ui/button';
 import { 
     Play, Pause, Volume2, VolumeX, 
@@ -23,7 +24,7 @@ interface VideoOSDProps {
 
 export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
     const { playbackState } = manager;
-    const { paused, currentTime, duration, currentItem, currentMediaSource, volume, muted, isMiniPlayer } = playbackState;
+    const { paused, currentTime, duration, currentItem, currentMediaSource, volume, muted, isMiniPlayer, isLoading, isBuffering } = playbackState;
     const { initializeTrickplay, renderThumbnail } = useTrickplay();
     const { checkSegment } = useSkipSegments(currentItem?.Id);
     const activeSegment = checkSegment(currentTime);
@@ -152,6 +153,12 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
     }
 
     return (
+        <>
+        <VideoSplashLoader 
+            item={currentItem} 
+            isVisible={(isLoading || isBuffering || false)} 
+            onClose={() => manager.stop()}
+        />
         <div 
             className={`absolute inset-0 z-50 flex flex-col justify-between transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 cursor-none'}`}
             onMouseMove={handleMouseMove}
@@ -333,5 +340,6 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
                 </div>
             </div>
         </div>
+        </>
     );
 };

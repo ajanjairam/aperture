@@ -55,12 +55,29 @@ export function usePlaybackManager(): PlaybackContextValue {
         repeatMode: 'Off',
         preferredQuality: 'auto',
         isMiniPlayer: false,
+        isLoading: true,
     });
 
     const activePlayerRef = useRef<Player | null>(null);
 
     const updateState = useCallback((updates: Partial<PlaybackState>) => {
-        setPlaybackState(prev => ({ ...prev, ...updates }));
+        setPlaybackState(prev => {
+            // Auto-clear loading if we get progress or buffering finish or unpause
+            const shouldClearLoading = (updates.currentTime !== undefined && updates.currentTime > 0.1) 
+                || (updates.isBuffering === false)
+                || (updates.paused === false);
+                
+            let nextLoading = prev.isLoading;
+            if (shouldClearLoading) {
+                nextLoading = false;
+            }
+            // If explicit isLoading is passed, respect it
+            if (updates.isLoading !== undefined) {
+                nextLoading = updates.isLoading;
+            }
+
+            return { ...prev, ...updates, isLoading: nextLoading };
+        });
     }, []);
 
     const registerPlayer = useCallback((type: PlayerType, player: Player) => {
@@ -213,7 +230,8 @@ export function usePlaybackManager(): PlaybackContextValue {
             currentTime: 0, 
             duration: (itemToPlay!.RunTimeTicks || 0) / 10000000,
             subtitleStreamIndex: options.subtitleStreamIndex,
-            audioStreamIndex: options.audioStreamIndex
+            audioStreamIndex: options.audioStreamIndex,
+            isLoading: true
         });
 
         try {

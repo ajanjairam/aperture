@@ -43,6 +43,7 @@ export interface PlaybackState {
   repeatMode: 'Off' | 'All' | 'One';
   preferredQuality: string;
   isMiniPlayer?: boolean;
+  isLoading?: boolean;
 }
 
 export interface Player {
