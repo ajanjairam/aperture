@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Antenna, Play } from "lucide-react";
-import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+import { usePlayback } from "../hooks/usePlayback";
 
 import { decode } from "blurhash";
 import { Link } from "react-router-dom";
@@ -13,7 +13,8 @@ export function LiveChannelCard({
   item: BaseItemDto;
   serverUrl: string;
 }) {
-  const { playMedia, setIsPlayerVisible } = useMediaPlayer();
+  const { play } = usePlayback();
+
 
   // WIP - Link logic for TV channels
   let linkHref = "/livetv/" + item.Id;
@@ -63,13 +64,12 @@ export function LiveChannelCard({
     e.stopPropagation();
 
     if (item && item.Type !== "BoxSet") {
-      await playMedia({
+      play({
         id: item.Id!,
         name: item.Name!,
         type: item.Type as "Movie" | "Series" | "Episode",
         resumePositionTicks: item.UserData?.PlaybackPositionTicks,
       });
-      setIsPlayerVisible(true);
     }
   };
 

@@ -7,7 +7,7 @@ import { searchItems } from "../actions";
 import { Badge } from "./ui/badge";
 import { SearchSuggestionItem } from "./search-suggestion-item";
 import { TextShimmerWave } from "./ui/text-shimmer-wave";
-import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+
 import * as Kbd from "../components/ui/kbd";
 import { TextShimmer } from "./motion-primitives/text-shimmer";
 import { useAuth } from "../hooks/useAuth";
@@ -24,7 +24,8 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
-  const { isPlayerVisible } = useMediaPlayer();
+  // const { isPlayerVisible } = useMediaPlayer(); 
+  const isPlayerVisible = false;
   // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);

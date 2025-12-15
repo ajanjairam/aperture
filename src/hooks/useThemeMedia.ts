@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getThemeSongStreamUrl, getThemeVideoStreamUrl } from "../actions";
-import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+
 import { useSettings } from "../contexts/settings-context";
 
 export function useThemeMedia(itemId?: string | null) {
@@ -11,7 +11,8 @@ export function useThemeMedia(itemId?: string | null) {
   const [videoFinished, setVideoFinished] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { isPlayerVisible } = useMediaPlayer();
+ 
+  const isPlayerVisible = false; // Hardcode to false since player is gone
   const { enableThemeBackdrops, enableThemeSongs } = useSettings();
   const shouldResumeAudioRef = useRef(false);
   const shouldResumeVideoRef = useRef(false);

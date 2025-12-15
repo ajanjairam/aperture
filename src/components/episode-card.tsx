@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Skeleton } from "../components/ui/skeleton";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Play } from "lucide-react";
-import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+import { usePlayback } from "../hooks/usePlayback";
 import { Link } from "react-router-dom";
 
 export function EpisodeCard({
@@ -18,7 +18,7 @@ export function EpisodeCard({
   showProgress?: boolean;
   resumePosition?: number;
 }) {
-  const { playMedia, setIsPlayerVisible } = useMediaPlayer();
+  const { play } = usePlayback();
 
   const linkHref = `/episode/${item.Id}`;
 
@@ -37,14 +37,13 @@ export function EpisodeCard({
     e.stopPropagation();
 
     if (item) {
-      await playMedia({
+      play({
         id: item.Id!,
         name: item.Name!,
         type: "Episode",
         resumePositionTicks:
           resumePosition || item.UserData?.PlaybackPositionTicks,
       });
-      setIsPlayerVisible(true);
     }
   };
 

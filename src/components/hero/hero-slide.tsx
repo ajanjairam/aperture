@@ -1,7 +1,7 @@
 
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
 import { Play, Info } from "lucide-react";
-import { useMediaPlayer } from "../../contexts/MediaPlayerContext";
+import { usePlayback } from "../../hooks/usePlayback";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -16,7 +16,7 @@ interface HeroSlideProps {
 }
 
 export function HeroSlide({ item, serverUrl }: HeroSlideProps) {
-  const { playMedia, setIsPlayerVisible } = useMediaPlayer();
+  const { play } = usePlayback();
   const navigate = useNavigate();
   const [blurDataUrl, setBlurDataUrl] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -62,13 +62,12 @@ export function HeroSlide({ item, serverUrl }: HeroSlideProps) {
 
   const handlePlay = async () => {
      if (item && item.Type !== "BoxSet") {
-      await playMedia({
+      play({
         id: item.Id!,
         name: item.Name!,
         type: item.Type as "Movie" | "Series" | "Episode",
         resumePositionTicks: item.UserData?.PlaybackPositionTicks,
       });
-      setIsPlayerVisible(true);
     }
   };
 

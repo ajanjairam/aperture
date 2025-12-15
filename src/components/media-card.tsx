@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Skeleton } from "../components/ui/skeleton";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Play } from "lucide-react";
-import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+import { usePlayback } from "../hooks/usePlayback";
 
 import { decode } from "blurhash";
 import { Link } from "react-router-dom";
@@ -24,7 +24,7 @@ export function MediaCard({
   resumePosition?: number;
   fullWidth?: boolean;
 }) {
-  const { playMedia, setIsPlayerVisible } = useMediaPlayer();
+  const { play } = usePlayback();
 
   let linkHref = "";
   if (item.Type === "Movie") {
@@ -98,14 +98,13 @@ export function MediaCard({
     e.stopPropagation();
 
     if (item && item.Type !== "BoxSet") {
-      await playMedia({
+      play({
         id: item.Id!,
         name: item.Name!,
         type: item.Type as "Movie" | "Series" | "Episode",
         resumePositionTicks:
           resumePosition || item.UserData?.PlaybackPositionTicks,
       });
-      setIsPlayerVisible(true);
     }
   };
 

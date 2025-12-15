@@ -32,7 +32,7 @@ import {
   formatPlaybackPosition,
   formatRuntime,
 } from "../lib/utils";
-import { useMediaPlayer } from "../contexts/MediaPlayerContext";
+import { usePlayback } from "../hooks/usePlayback";
 import { DolbyDigital, DolbyTrueHd, DolbyVision, DtsHd } from "./icons/codecs";
 
 interface MediaActionsProps {
@@ -49,7 +49,7 @@ export function MediaActions({
   onBeforePlay,
 }: MediaActionsProps) {
   const media = movie || show || episode;
-  const { isPlayerVisible, setIsPlayerVisible, playMedia } = useMediaPlayer();
+  const { play } = usePlayback();
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
   const [userPolicy, setUserPolicy] = useState<UserPolicy | null>(null);
@@ -248,11 +248,10 @@ export function MediaActions({
       <div className="flex items-center gap-2">
         <Button
           variant="default"
-          onClick={async () => {
-            // Set the current media in context, GlobalMediaPlayer will handle the rest
+          onClick={() => {
             if (media) {
               onBeforePlay?.();
-              await playMedia({
+              play({
                 id: media.Id!,
                 name: media.Name!,
                 type: media.Type as
@@ -263,7 +262,6 @@ export function MediaActions({
                 resumePositionTicks: media.UserData?.PlaybackPositionTicks,
                 selectedVersion: selectedVersion,
               });
-              setIsPlayerVisible(true);
             }
           }}
           className="gap-2"
