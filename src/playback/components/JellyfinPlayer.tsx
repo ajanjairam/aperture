@@ -61,6 +61,49 @@ export const JellyfinPlayer: React.FC<JellyfinPlayerProps> = ({
         else unregisterPlayer('Audio');
     }, [registerPlayer, unregisterPlayer]);
 
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input
+            if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+            const { currentTime, duration, volume, paused } = manager.playbackState;
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    manager.seek(Math.max(0, currentTime - 10) * 10000000);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    manager.seek(Math.min(duration, currentTime + 10) * 10000000);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    manager.setVolume(Math.min(100, volume + 10));
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    manager.setVolume(Math.max(0, volume - 10));
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    paused ? manager.unpause() : manager.pause();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    manager.stop();
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [manager]); // Manager state is accessed via closure? No, manager changes ref.
+    // Wait, manager changes every render. So this effect re-runs every render.
+    // That's fine, it ensures we have latest state in closure if we access manager.playbackState.
+    // Actually, manager.playbackState IS available on the manager object.
+    
     return (
         <div className={`relative bg-black flex flex-col justify-center items-center ${className} group`}>
              <div className="w-full h-full"> 
