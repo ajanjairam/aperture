@@ -65,8 +65,22 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
             hlsRef.current = null;
         }
         
+        // Explicitly disable/clear any existing text tracks on the DOM element
+        // This helps prevent old subtitles from persisting if React/Browser desyncs
+        if (videoRef.current) {
+            Array.from(videoRef.current.textTracks).forEach(track => {
+                track.mode = 'disabled';
+            });
+            // Also try to remove them if they are dynamic (though React handles its own)
+        }
+        
         // Update tracks state
-        setTextTracks(options.textTracks || []);
+        setTextTracks([]); // Force clear first (though batching might merge this, it signals intent)
+        setTimeout(() => {
+            if (videoRef.current) { // Check strict validity after timeout
+                 setTextTracks(options.textTracks || []);
+            }
+        }, 0);
 
         const startTicks = options.startPositionTicks || 0;
         const seconds = startTicks / 10000000;
