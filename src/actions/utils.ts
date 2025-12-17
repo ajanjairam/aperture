@@ -379,7 +379,7 @@ export async function getSubtitleTracks(
     );
     const subtitleStreams =
       mediaSource?.MediaStreams?.filter(
-        (stream) => stream.Type === "Subtitle"
+        (stream) => stream.Type === "Subtitle" && (stream.Codec || '').toLowerCase() !== 'pgssub'
       ) || [];
     const subtitleTracks = subtitleStreams.map((stream) => {
       const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.vtt?api_key=${user.AccessToken}`;
