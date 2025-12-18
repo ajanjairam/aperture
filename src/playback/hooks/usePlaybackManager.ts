@@ -245,9 +245,13 @@ export function usePlaybackManager(): PlaybackContextValue {
                     }
                 }
 
+                const SUPPORTED_CONTAINERS = ['mp4', 'm4v', 'mov', 'webm'];
+                const isContainerSupported = SUPPORTED_CONTAINERS.includes((mediaSource.Container || '').toLowerCase());
+
                 const isDirectPlayCompatible = 
-                    mediaSource.SupportsDirectPlay || 
-                    (mediaSource.Container === 'mp4' && mediaSource.MediaStreams?.some(s => s.Type === 'Video' && s.Codec === 'h264'));
+                    isContainerSupported && 
+                    (mediaSource.SupportsDirectPlay || 
+                    (mediaSource.Container === 'mp4' && mediaSource.MediaStreams?.some(s => s.Type === 'Video' && s.Codec === 'h264')));
 
                 // Ensure selected bitrate allows for direct play
                 const isBitrateCompatible = !options.videoBitrate || (mediaSource.Bitrate && options.videoBitrate >= mediaSource.Bitrate);

@@ -30,6 +30,7 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
     const [textTracks, setTextTracks] = useState<any[]>([]);
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
+    const pendingSeekTicks = useRef<number | null>(null);
     
     // Refs to access latest props in stable imperative methods
     const propsRef = useRef({ onEnded, onTimeUpdate, onPause, onPlay, onError, onVolumeChange, onDurationChange });
@@ -145,10 +146,23 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
                  return videoRef.current.play().catch(e => onError?.(e));
              }
         } else {
-             // Direct Play / Progressive Download
+             // Direct Play / Progressive Download / Native HLS
              videoRef.current.src = url;
-             videoRef.current.currentTime = seconds;
-             return videoRef.current.play().catch(e => onError?.(e));
+             
+             // In native HLS (Safari), we must wait for metadata before seeking
+             if (videoRef.current.readyState >= 1) {
+                 videoRef.current.currentTime = seconds;
+             } else {
+                 pendingSeekTicks.current = startTicks;
+             }
+             
+             return videoRef.current.play().catch(e => {
+                 if (e.name === 'NotAllowedError') {
+                     console.warn("Autoplay blocked by browser. User interaction required.");
+                 } else {
+                     onError?.(e);
+                 }
+             });
         }
     };
 
@@ -172,7 +186,12 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
         },
         seek: (ticks: number) => {
             if (videoRef.current) {
-                videoRef.current.currentTime = ticks / 10000000;
+                if (videoRef.current.readyState >= 1) {
+                    videoRef.current.currentTime = ticks / 10000000;
+                    pendingSeekTicks.current = null;
+                } else {
+                    pendingSeekTicks.current = ticks;
+                }
             }
         },
         setVolume: (val: number) => {
@@ -210,6 +229,12 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
 
         const handleTimeUpdate = () => onTimeUpdate?.(video.currentTime);
         const handleDurationChange = () => onDurationChange?.(video.duration);
+        const handleLoadedMetadata = () => {
+             if (pendingSeekTicks.current !== null) {
+                 video.currentTime = pendingSeekTicks.current / 10000000;
+                 pendingSeekTicks.current = null;
+             }
+        };
         const handleEnded = () => onEnded?.();
         const handlePause = () => onPause?.();
         const handlePlay = () => onPlay?.();
@@ -218,6 +243,7 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
 
         video.addEventListener('timeupdate', handleTimeUpdate);
         video.addEventListener('durationchange', handleDurationChange);
+        video.addEventListener('loadedmetadata', handleLoadedMetadata);
         video.addEventListener('ended', handleEnded);
         video.addEventListener('pause', handlePause);
         video.addEventListener('play', handlePlay);
@@ -227,6 +253,7 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
         return () => {
             video.removeEventListener('timeupdate', handleTimeUpdate);
             video.removeEventListener('durationchange', handleDurationChange);
+            video.removeEventListener('loadedmetadata', handleLoadedMetadata);
             video.removeEventListener('ended', handleEnded);
             video.removeEventListener('pause', handlePause);
             video.removeEventListener('play', handlePlay);
@@ -259,6 +286,8 @@ export const HTMLVideoPlayer = forwardRef<Player, HTMLVideoPlayerProps>(({
             className={`w-full h-full bg-black ${className}`}
             crossOrigin="anonymous"
             playsInline
+            // @ts-ignore - Safari specific attributes
+            x-webkit-airplay="allow"
         >
             {textTracks.map((track, i) => (
                 <track

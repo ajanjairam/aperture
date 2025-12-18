@@ -24,7 +24,7 @@ export function enableHlsJsPlayer(runTimeTicks: number | undefined, mediaType: s
         return false;
     }
 
-    if (browser.iOS) {
+    if (browser.iOS || browser.safari) {
         return false;
     }
 
