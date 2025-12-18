@@ -172,6 +172,7 @@ function Main({ children }: { children: ReactNode }) {
   const { themeMedia } = useMediaDetail();
   return (
     <motion.div
+      data-slot="media-detail-main"
       className="relative z-10 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6 shadow-2xl"
       initial={{ marginTop: "-13.5rem" }}
       animate={{

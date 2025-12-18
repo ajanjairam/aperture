@@ -570,6 +570,38 @@
   background: var(--input) !important;
 }
 
+/* Override MediaDetail.Main with frosted glass in Glassmorphism theme */
+.glassmorphism [data-slot="media-detail-main"] {
+  background: rgba(256, 256, 256, 0.1) !important;
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(256, 256, 256, 0.1);
+}
+
+/* Override badges with frosted glass in Glassmorphism theme */
+.glassmorphism [data-slot="badge"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Override outline buttons with frosted glass in Glassmorphism theme */
+.glassmorphism button[data-slot="button"][data-variant="outline"],
+.glassmorphism button[data-variant="outline"] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Hover state for outline buttons in Glassmorphism theme */
+.glassmorphism button[data-slot="button"][data-variant="outline"]:hover,
+.glassmorphism button[data-variant="outline"]:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
 /* Ensure children like icons and text are not inherited with filters or unusual blend modes */
 .glassmorphism [data-slot="sidebar"] *,
 .glassmorphism [data-slot="card"] * {
