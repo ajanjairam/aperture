@@ -55,23 +55,25 @@ It builds upon the solid foundation of **[Finetic](https://github.com/AyaanZaver
 
 Special Thanks to **[@AyaanZaveri](https://github.com/AyaanZaveri)**, this is based on his work on finetic, but I am building it upon my personal preferences.
 
-### 🔹 What’s New in APERTÚRE
+### 🔹 Core Features & History (v1.0 - v1.1)
 
-- **Simplified Experience** – Removed AI dependencies for a faster, lighter client, as I personally would not use them at all.
-- **Migrated to Vite** - The Entire Project is migrated into Vite + React, since Vite is much faster than webpack and we dont really need SSR features for an application like this.
-- **Collections Support** – Full integration for browsing and playing box sets
-- **Live TV (WIP)** – Live TV currently works partially, Channels populate but a guide and programs page must be integrated.
-- **Improved Navigation & Performance** – Cleaner architecture and optimized loading
-- **Using Tauri instead of Electron** – Now native apps will be based on tauri for better performance, especially with Vite + React + Tauri
+- **Performance First** – Migrated to **Vite + React + Tauri**, removing heavy AI dependencies for a lightning-fast experience.
+- **Rich Media Experience** – Native support for **Video Backdrops**, **Theme Songs**, and **Trickplay** thumbnails.
+- **Smart Connectivity** – **Quick Connect** login support and intelligent **Direct Play/Transcoding** selection.
+- **Advanced Library Support** – Integrated support for **Collections (Box Sets)** and Live TV (WIP).
+- **Theming** – Multiple theme variations including "Cinematic Theatre Black".
 
-**🔹Version 1.1.x Changes🔹**
+### 🔹 Version 1.2.x Changes (New)
 
-- **Quick Connect** – Now supports quick connect option, this is the default way to login, password login can still be used.
-- **Now Supports Direct Play** – Now the urls can be played by both transcoding as well as direct streaming.
-- **Theme Songs Playback** – Now when browsing the tv show/movie detail page, will play the theme song whenever available.
-- **Video Backdrops/Theme Videos** – Now when browsing the tv show/movie detail page, whenever a theme video is available, it will be used as the video backdrop instead of the static backdrop image, theme video takes precedence over theme music, hence theme music is disabled on items where theme video is available.
-- **Theming Enhancements** – Various theming variations have been added apart from the default light/dark mode (My personal favorite is the Cinematic Theatre Black).
-- **Added Trickplay Support** – Trickplay images are shown when available.
+_This milestone serves as a major foundational update, focusing on essential playback improvements and a significantly polished user experience._
+
+- **Redesigned Playback Engine** – A seamless, rebuilt playback subsystem aligned with Jellyfin best practices for reliable and smooth streaming.
+- **Hero Media Bar** – A new, visually striking "Hero" section at the top of the interface to showcase your highlighted content.
+- **Smart Episodic Features** – Native support for **Intro and Outro skipping** to make binge-watching effortless (requires the [Intro Skipper plugin](https://github.com/intro-skipper/intro-skipper) on your server).
+- **Improved Audio Control** – You can now easily select your preferred **Audio Stream** directly from the media details page.
+- **Mini Player** – Keep watching your content while browsing the rest of your library with the new Picture-in-Picture mode.
+- **Better Connectivity** – Added **Local Network Discovery** and saved server preferences to make connecting (and staying connected) easier.
+- **Refined Startup** – A proper **Splash Screen** now handles initialization, ensuring the app launches smoothly and efficiently every time.
 
 ---
 
