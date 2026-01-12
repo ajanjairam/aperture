@@ -242,9 +242,7 @@ function Poster({ isEpisode = false }: PosterProps) {
  */
 function Content({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8">
-      {children}
-    </div>
+    <div className="w-full md:w-2/3 lg:w-3/4 pt-0 md:pt-8">{children}</div>
   );
 }
 
