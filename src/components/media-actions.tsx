@@ -33,6 +33,7 @@ import {
   formatRuntime,
 } from "../lib/utils";
 import { usePlayback } from "../hooks/usePlayback";
+import { useIsMobile } from "../hooks/use-mobile";
 import { DolbyDigital, DolbyTrueHd, DolbyVision, DtsHd } from "./icons/codecs";
 
 interface MediaActionsProps {
@@ -50,6 +51,7 @@ export function MediaActions({
 }: MediaActionsProps) {
   const media = movie || show || episode;
   const { play } = usePlayback();
+  const isMobile = useIsMobile();
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
   const [selectedAudioStreamIndex, setSelectedAudioStreamIndex] = useState<number | undefined>(undefined);
@@ -341,7 +343,7 @@ export function MediaActions({
 
   return (
     <div className="flex flex-col gap-2 mb-6">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <Button
           variant="default"
           onClick={() => {
@@ -361,7 +363,7 @@ export function MediaActions({
               });
             }
           }}
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto justify-center sm:justify-start"
         >
           <Play className="h-4 w-4" />
           {hasProgress ? "Resume" : "Play"}
@@ -370,19 +372,22 @@ export function MediaActions({
           ) : null}
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {hasMultipleVersions ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="truncate">
                 <Button
                   variant="outline"
-                  className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4"
+                  className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4 w-full sm:w-auto justify-between sm:justify-start"
                 >
                   {renderSourceLabel(selectedVersion)}
                   <ChevronDown className="h-4 w-4 opacity-50 ml-1 flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent
+                align={isMobile ? "center" : "start"}
+                className={isMobile ? "w-[calc(100vw-2rem)]" : "min-w-56"}
+              >
                 {media.MediaSources.map((source: MediaSourceInfo) => (
                   <DropdownMenuItem
                     key={source.Id}
@@ -405,7 +410,7 @@ export function MediaActions({
           ) : (
             <Button
               variant="outline"
-              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4"
+              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4 w-full sm:w-auto justify-between sm:justify-start"
             >
               {getMediaSourceDisplayName(selectedVersion)}
             </Button>
@@ -421,7 +426,7 @@ export function MediaActions({
                     return (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4 max-w-[200px]">
+                                <Button variant="outline" className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4 w-full sm:w-auto sm:max-w-[200px] justify-between sm:justify-start">
                                     <Music className="h-4 w-4 opacity-70" />
                                     <span className="truncate">
                                         {currentAudio ? getAudioStreamDisplayName(currentAudio) : 'Audio'}
@@ -429,7 +434,10 @@ export function MediaActions({
                                     <ChevronDown className="h-4 w-4 opacity-50 ml-1 flex-shrink-0" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
+                            <DropdownMenuContent
+                              align={isMobile ? "center" : "start"}
+                              className={isMobile ? "w-[calc(100vw-2rem)]" : "min-w-56"}
+                            >
                                 {audioStreams.map(stream => (
                                     <DropdownMenuItem
                                         key={stream.Index}
@@ -454,30 +462,46 @@ export function MediaActions({
             })()
         )}
 
-        <Button variant="outline" size="icon" onClick={download}>
-          <Download className="h-4 w-4" />
-        </Button>
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={download}
+            className="flex-1 sm:flex-none sm:h-9 sm:w-9 sm:px-0 sm:gap-0"
+          >
+            <Download className="h-4 w-4" />
+            <span className="ml-2 text-sm sm:hidden">Download</span>
+          </Button>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Info className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl dark:bg-background/30 backdrop-blur-md z-[9999999999]">
-            <DialogHeader>
-              <DialogTitle>Media Info</DialogTitle>
-            </DialogHeader>
-            <MediaInfoDialog mediaSource={selectedVersion} />
-          </DialogContent>
-        </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none sm:h-9 sm:w-9 sm:px-0 sm:gap-0"
+              >
+                <Info className="h-4 w-4" />
+                <span className="ml-2 text-sm sm:hidden">Info</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl dark:bg-background/30 backdrop-blur-md z-[9999999999]">
+              <DialogHeader>
+                <DialogTitle>Media Info</DialogTitle>
+              </DialogHeader>
+              <MediaInfoDialog mediaSource={selectedVersion} />
+            </DialogContent>
+          </Dialog>
 
-        {userPolicy?.IsAdministrator && (
-          <ImageEditorDialog
-            itemId={media.Id!}
-            itemName={media.Name || "Unknown"}
-          />
-        )}
+          {userPolicy?.IsAdministrator && (
+            <ImageEditorDialog
+              itemId={media.Id!}
+              itemName={media.Name || "Unknown"}
+              triggerClassName="flex-1 sm:flex-none sm:h-9 sm:w-9 sm:px-0 sm:gap-0"
+              triggerLabel="Edit"
+              triggerLabelClassName="ml-2 text-sm sm:hidden"
+            />
+          )}
+        </div>
       </div>
       {hasMultipleVersions && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground ml-1">

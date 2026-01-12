@@ -272,9 +272,17 @@ function Info({ children }: { children?: ReactNode }) {
 /**
  * Actions Container
  */
-function Actions({ children, className = "" }: { children: ReactNode; className?: string }) {
+function Actions({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className={`px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center ${className}`}>
+    <div
+      className={`w-full px-4 sm:px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center items-stretch md:items-start ${className}`}
+    >
       {children}
     </div>
   );
