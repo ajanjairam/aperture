@@ -37,6 +37,9 @@ import { toast } from "sonner";
 interface ImageEditorDialogProps {
   itemId: string;
   itemName: string;
+  triggerClassName?: string;
+  triggerLabel?: string;
+  triggerLabelClassName?: string;
 }
 
 type ImageType = "Primary" | "Backdrop" | "Logo" | "Thumb";
@@ -52,6 +55,9 @@ const IMAGE_TYPES = [
 export function ImageEditorDialog({
   itemId,
   itemName,
+  triggerClassName,
+  triggerLabel,
+  triggerLabelClassName,
 }: ImageEditorDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<ImageType>("Primary");
@@ -152,8 +158,11 @@ export function ImageEditorDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className={triggerClassName}>
           <Edit className="h-4 w-4" />
+          {triggerLabel ? (
+            <span className={triggerLabelClassName}>{triggerLabel}</span>
+          ) : null}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-6xl max-h-[80vh] dark:bg-background/95 backdrop-blur-md">

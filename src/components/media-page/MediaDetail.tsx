@@ -158,7 +158,11 @@ function Backdrop() {
         togglePlay={togglePlay}
         isVisible={hasThemeMedia && !isPlayerActive}
       />
-      <div className="absolute top-8 left-0 right-0 z-30 px-6">
+      <div
+        className={`absolute top-8 left-0 right-0 z-30 px-6 ${
+          hasThemeMedia && !isPlayerActive ? "pr-32" : ""
+        }`}
+      >
         <SearchBar />
       </div>
     </div>
@@ -238,9 +242,7 @@ function Poster({ isEpisode = false }: PosterProps) {
  */
 function Content({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8">
-      {children}
-    </div>
+    <div className="w-full md:w-2/3 lg:w-3/4 pt-0 md:pt-8">{children}</div>
   );
 }
 
@@ -272,9 +274,17 @@ function Info({ children }: { children?: ReactNode }) {
 /**
  * Actions Container
  */
-function Actions({ children, className = "" }: { children: ReactNode; className?: string }) {
+function Actions({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className={`px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center ${className}`}>
+    <div
+      className={`w-full px-4 sm:px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center items-stretch md:items-start ${className}`}
+    >
       {children}
     </div>
   );

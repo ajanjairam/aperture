@@ -13,6 +13,7 @@ import { TextShimmer } from "./motion-primitives/text-shimmer";
 import { useAuth } from "../hooks/useAuth";
 import { SidebarTrigger } from "../components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "../hooks/use-mobile";
 
 interface SearchBarProps {
   className?: string;
@@ -24,7 +25,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
-  // const { isPlayerVisible } = useMediaPlayer(); 
+  const isMobile = useIsMobile();
   const isPlayerVisible = false;
   // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -201,7 +202,11 @@ export function SearchBar({ className = "" }: SearchBarProps) {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search movies, TV shows, episodes, and people..."
+            placeholder={
+              isMobile
+                ? "Search"
+                : "Search movies, TV shows, episodes, and people..."
+            }
             value={searchQuery}
             onChange={handleInputChange}
             onKeyDown={handleInputKeyDown}
