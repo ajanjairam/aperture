@@ -269,7 +269,7 @@ export function ImageEditorDialog({
                     <p>No {key.toLowerCase()} images available</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {sortImages(images[key], sortBy).map((image, index) => {
                       // Determine aspect ratio based on image type
                       const getAspectRatio = (type: string) => {
@@ -293,12 +293,14 @@ export function ImageEditorDialog({
                           className="overflow-hidden py-0 gap-0"
                         >
                           <div
-                            className={`relative ${getAspectRatio(key)} p-3`}
+                            className={`relative ${getAspectRatio(
+                              key
+                            )} rounded-lg overflow-hidden`}
                           >
                             <img
                               src={image.Url}
                               alt={`${key} option ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg"
+                              className="w-full h-full object-contain p-3"
                               loading="lazy"
                             />
                           </div>
