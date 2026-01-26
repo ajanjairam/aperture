@@ -173,17 +173,35 @@ export function usePlaybackManager(): PlaybackContextValue {
                  let targetIndex = options.subtitleStreamIndex; 
                  
                  if (targetIndex === undefined) {
-                     const defaultSub = subs.find(s => s.default);
-                     if (defaultSub) {
-                         targetIndex = defaultSub.index;
-                         options.subtitleStreamIndex = targetIndex;
-                     }else if(user && user.Configuration && user.Configuration.SubtitleMode &&
-                         user.Configuration.SubtitleLanguagePreference &&
-                         user.Configuration.SubtitleMode === SubtitlePlaybackMode.Always){
-                         const subtitlePreferance =
-                             subs.find(s => s.language === user.Configuration!.SubtitleLanguagePreference);
-                         if (subtitlePreferance) {
-                             targetIndex = subtitlePreferance.index;
+                     if(user && user.Configuration && user.Configuration.SubtitleMode){
+                         let subtitlePreference: typeof subs[0] | undefined;
+                         switch (user.Configuration.SubtitleMode) {
+                             case SubtitlePlaybackMode.Default:
+                                 subtitlePreference = subs.find(s => s.default);
+                                 break;
+                             case SubtitlePlaybackMode.OnlyForced:
+                                 subtitlePreference = subs.find(s => s.forced);
+                                 break;
+                             case SubtitlePlaybackMode.Always:
+                                 if(user.Configuration.SubtitleLanguagePreference)
+                                     subtitlePreference = subs.find(s =>
+                                         s.language === user.Configuration!.SubtitleLanguagePreference!);
+                                 break;
+                             case SubtitlePlaybackMode.Smart:
+                                 const audioLang = mediaSource.MediaStreams
+                                     ?.find(s => s.Type === 'Audio' && s.Index === options.audioStreamIndex)
+                                     ?.Language;
+                                 if(audioLang && user.Configuration.SubtitleLanguagePreference
+                                     && audioLang !== user.Configuration.SubtitleLanguagePreference) {
+                                     subtitlePreference = subs.find(s =>
+                                         s.language === user.Configuration!.SubtitleLanguagePreference!);
+                                 }
+                                 break;
+                             default:
+                                 // SubtitlePlaybackMode.None is handled here;
+                         }
+                         if(subtitlePreference) {
+                             targetIndex = subtitlePreference.index;
                              options.subtitleStreamIndex = targetIndex;
                          }
                      }
