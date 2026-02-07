@@ -36,6 +36,7 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
     }, [currentItem, currentMediaSource, initializeTrickplay]);
 
     const [isHovering, setIsHovering] = useState(false);
+    const [showDuration, setShowDuration] = useState(true);
     const [lastActivity, setLastActivity] = useState(Date.now());
     const navigate = useNavigate();
 
@@ -181,7 +182,7 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
                     </h2>
                     {currentItem?.SeriesName && (
                         <p className="text-sm text-gray-300 drop-shadow-md truncate">
-                            {currentItem.SeriesName}
+                            {`${currentItem.SeriesName} S${currentItem.ParentIndexNumber}:E${currentItem.IndexNumber}`}
                         </p>
                     )}
                 </div>
@@ -287,8 +288,14 @@ export const VideoOSD: React.FC<VideoOSDProps> = ({ manager, className }) => {
                         />
                     </div>
 
-                    <span className="text-xs font-mono text-gray-300">
-                        {formatVideoTime(durationSeconds * 10000000, durationSeconds * 10000000)}
+                    <span
+                        className="text-xs font-mono text-gray-300 cursor-pointer"
+                        onClick={() => setShowDuration(prev => !prev)}
+                    >
+                        {
+                            showDuration ? formatVideoTime(durationSeconds * 10000000, durationSeconds * 10000000)
+                            : "-" + formatVideoTime((durationSeconds - displayTime) * 10000000, durationSeconds * 10000000)
+                        }
                     </span>
                 </div>
 
